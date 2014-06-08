@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="primary_color">#09425A</color>
+    <color name="app_background">#58CFEE</color>
+    <color name="game_over_bg">#58CFEE</color>
+    <color name="text_color">#1D2834</color>
+    <color name="button_text_color">#C4EBF4</color>
+
+</resources>

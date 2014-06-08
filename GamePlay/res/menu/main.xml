@@ -1,0 +1,16 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/undo"
+        android:icon="@drawable/undo"
+        android:orderInCategory="100"
+        android:showAsAction="ifRoom"
+        android:title="undo"/>
+    <item
+        android:id="@+id/restart"
+        android:icon="@drawable/rsz_refresh"
+        android:orderInCategory="100"
+        android:showAsAction="ifRoom"
+        android:title="restart"/>
+
+</menu>

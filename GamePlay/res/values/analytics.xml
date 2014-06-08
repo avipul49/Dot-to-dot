@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Replace placeholder ID with your tracking ID -->
+    <string name="ga_trackingId">UA-51111129-1</string>
+
+    <!-- Enable automatic activity tracking -->
+    <bool name="ga_autoActivityTracking">true</bool>
+
+    <!-- Enable automatic exception tracking -->
+    <bool name="ga_reportUncaughtExceptions">true</bool>
+
+    <integer name="ga_dispatchPeriod">1</integer>
+
+    <string name="ga_appName">Dot to Dot</string>
+    <string name="ga_appVersion">1.2</string>
+    <string name="com.vm.gameplay.MainMenuActivity">Home Screen</string>
+    <string name="com.vm.gameplay.GameSetupActivity">Game Setup</string>
+    <string name="com.vm.gameplay.SurfaceViewActivity">Game Screen</string>
+
+    <integer name="ga_sessionTimeout">30</integer>
+
+</resources>

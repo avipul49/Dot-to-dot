@@ -1,0 +1,30 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/fragment_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="10dp"
+    tools:context=".GameSetupActivity" >
+
+    <com.vm.gameplay.custom_view.PlayerCustomView
+        android:id="@+id/player_data"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+    </com.vm.gameplay.custom_view.PlayerCustomView>
+
+    <Button
+        android:id="@+id/find_game"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="Find Game" />
+
+    <ListView
+        android:id="@+id/game_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+    </ListView>
+
+</LinearLayout>

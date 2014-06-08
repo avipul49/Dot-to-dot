@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="default_score">"+1"</string>
+    <string name="bonus_score">"+5"</string>
+    <string name="panulty_score">"-2"</string>
+    <string name="app_name">Dot to Dot</string>
+    <string name="score_text">Final Score</string>
+    <string name="collection_text">%s collected</string>
+
+</resources>
