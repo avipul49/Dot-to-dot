@@ -15,7 +15,6 @@ public class Theme {
 	private int bonus, panulty, defaultIcon;
 	private int row = 7, col = 5;
 	private String gems;
-
 	private int[] board;
 
 	public Theme(String name) {
@@ -70,7 +69,7 @@ public class Theme {
 		return panulty == position;
 	}
 
-	public void setBoard(int total) {
+	public void createBoard(int total) {
 		board = new int[total];
 		board[(int) (Math.random() * total)] = -1;
 		board[(int) (Math.random() * total)] = -1;
@@ -196,6 +195,10 @@ public class Theme {
 
 	public String getGems() {
 		return gems;
+	}
+
+	public int getTotal() {
+		return row * col;
 	}
 
 }
