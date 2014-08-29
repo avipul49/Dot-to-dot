@@ -1,7 +1,7 @@
 package com.vm.gameplay;
 
 import java.util.ArrayList;
-
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
 import android.support.v4.view.ViewPager;
@@ -13,16 +13,16 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.TextView;
-
 import com.vm.gameplay.adapter.ThemePagerAdapter;
 import com.vm.gameplay.custom_view.CirclePageIndicator;
 import com.vm.gameplay.logging.LogginUtil;
 import com.vm.gameplay.model.Player;
 
+@SuppressLint("NewApi")
 public class GameSetupActivity extends BaseActivity implements
 		OnCheckedChangeListener {
-	private int[] colors = { Color.BLUE, Color.CYAN, Color.GRAY, Color.GREEN,
-			Color.RED, Color.YELLOW };
+	private int[] colors = { Color.parseColor("#AFE90C"), Color.BLUE,
+			Color.CYAN, Color.GRAY, Color.GREEN, Color.RED, Color.YELLOW };
 	private TextView tvPlayer1Color;
 	private TextView tvPlayer2Color;
 	private EditText etPlayer1Name;

@@ -7,8 +7,9 @@ import android.graphics.drawable.BitmapDrawable;
 
 public class Theme {
 	private int id;
-	private int backgroundRes;
-	private BitmapDrawable backgroundDrawable;
+	private int boardColor;
+	private int lineColor;
+	private int selectedLineColor;
 	private int[] collectionRes;
 	private BitmapDrawable[] collectionDrawables;
 	private String name;
@@ -45,7 +46,7 @@ public class Theme {
 			int bonus, int panulty, int defaultIcon) {
 		super();
 		this.id = id;
-		this.backgroundRes = backgroundRes;
+		this.boardColor = backgroundRes;
 		this.collectionRes = collectionRes;
 		this.name = name;
 		this.bonus = bonus;
@@ -110,7 +111,6 @@ public class Theme {
 	public void createDrawables(Resources r, int height, int width,
 			int cellWidth) {
 		if (collectionRes != null) {
-			backgroundDrawable = getDrawable(r, backgroundRes, width, height);
 			collectionDrawables = new BitmapDrawable[collectionRes.length];
 			for (int i = 0; i < collectionRes.length; i++) {
 				collectionDrawables[i] = getDrawable(r, collectionRes[i],
@@ -126,16 +126,12 @@ public class Theme {
 		return new BitmapDrawable(r, image);
 	}
 
-	public int getBackgroundRes() {
-		return backgroundRes;
+	public int getBoardColor() {
+		return boardColor;
 	}
 
-	public void setBackgroundRes(int backgroundRes) {
-		this.backgroundRes = backgroundRes;
-	}
-
-	public BitmapDrawable getBackgroundDrawable() {
-		return backgroundDrawable;
+	public void setBoardColor(int backgroundRes) {
+		this.boardColor = backgroundRes;
 	}
 
 	public int[] getCollectionRes() {
@@ -199,6 +195,22 @@ public class Theme {
 
 	public int getTotal() {
 		return row * col;
+	}
+
+	public int getLineColor() {
+		return lineColor;
+	}
+
+	public void setLineColor(int lineColor) {
+		this.lineColor = lineColor;
+	}
+
+	public int getSelectedLineColor() {
+		return selectedLineColor;
+	}
+
+	public void setSelectedLineColor(int selectedLineColor) {
+		this.selectedLineColor = selectedLineColor;
 	}
 
 }

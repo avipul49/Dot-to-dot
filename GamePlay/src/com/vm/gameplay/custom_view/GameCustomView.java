@@ -26,7 +26,7 @@ public class GameCustomView extends LinearLayout {
 
 	public void setGame(Game game) {
 		this.findViewById(R.id.root).setBackgroundResource(
-				game.getTheme().getBackgroundRes());
+				game.getTheme().getBoardColor());
 		setPlayer(game.getPlayer());
 
 	}

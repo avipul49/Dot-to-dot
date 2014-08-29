@@ -15,7 +15,7 @@ public class Computer extends Player {
 	private int cellWidth;
 
 	public Computer() {
-		super("Computer", Color.parseColor("#366C4E"));
+		super("Computer", Color.parseColor("#FEE401"));
 	}
 
 	public void setupMoves(int height, int width, int cellWidth) {

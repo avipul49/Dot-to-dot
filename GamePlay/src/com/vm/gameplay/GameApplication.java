@@ -1,6 +1,7 @@
 package com.vm.gameplay;
 
 import android.app.Application;
+import android.graphics.Color;
 
 import com.vm.gameplay.model.Theme;
 
@@ -11,23 +12,14 @@ public class GameApplication extends Application {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		themes = new Theme[3];
-		themes[0] = new Theme(0, "Basic", R.drawable.d_background, new int[] {
-				R.drawable.red, R.drawable.green, R.drawable.yellow }, 1, 0, 2);
+		themes = new Theme[1];
+		themes[0] = new Theme(0, "Basic", getResources().getColor(
+				R.color.background), new int[] { R.drawable.heartbreak,
+				R.drawable.cupcake, R.drawable.heart}, 1, 0, 2);
 		themes[0].setName("Basic");
 		themes[0].setGems("Flags");
-		themes[1] = new Theme(1, "Go green", R.drawable.backgroumd, new int[] {
-				R.drawable.tree, R.drawable.tree1, R.drawable.cactusicon }, 1,
-				2, 0);
-		themes[1].setName("Go green");
-		themes[1].setGems("Trees");
-
-		themes[2] = new Theme(1, "Crazzy cars", R.drawable.cars_bg_1,
-				new int[] { R.drawable.red_car, R.drawable.blue_car,
-						R.drawable.yello_car }, 1, 0, 2);
-		themes[2].setName("Crazzy cars");
-		themes[2].setGems("Cars");
-
+		themes[0].setLineColor(getResources().getColor(R.color.blur_lines));
+		themes[0].setSelectedLineColor(Color.WHITE);
 	}
 
 	public Theme getTheme(int theme) {

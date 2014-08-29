@@ -48,8 +48,8 @@ public class ThemePagerAdapter extends PagerAdapter {
 		defaultIcon.setImageResource(themes[position].getDefaultIcon());
 		bonudIcon.setImageResource(themes[position].getBonusIcon());
 		panultytIcon.setImageResource(themes[position].getPanultyIcon());
-		layout.findViewById(R.id.theme_backgorund).setBackgroundResource(
-				themes[position].getBackgroundRes());
+		layout.findViewById(R.id.theme_backgorund).setBackgroundColor(
+				themes[position].getBoardColor());
 		((ViewPager) container).addView(layout);
 
 		return layout;

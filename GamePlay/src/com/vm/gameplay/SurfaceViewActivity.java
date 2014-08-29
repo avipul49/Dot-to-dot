@@ -12,8 +12,6 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Handler;
-import android.text.SpannableString;
-import android.text.style.StyleSpan;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -24,12 +22,9 @@ import android.view.View.OnTouchListener;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
-import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.vm.gameplay.animation.AnimationCallback;
-import com.vm.gameplay.animation.ScoreUpdateAnimation;
 import com.vm.gameplay.dialog.DialogCallback;
 import com.vm.gameplay.dialog.MessageDialog;
 import com.vm.gameplay.gameplay.GamePlay;
@@ -53,7 +48,6 @@ public class SurfaceViewActivity extends BaseActivity implements
 	private TextView tvScore[] = new TextView[2];
 	private TextView tvTurn;
 	private TextView tvTimer;
-	private LinearLayout llPlayers;
 	private BluetoothGameService mGameService;
 	private boolean restart = false;
 	private boolean finish = false;
@@ -159,7 +153,6 @@ public class SurfaceViewActivity extends BaseActivity implements
 		ArrayList<Player> players1 = getIntent().getParcelableArrayListExtra(
 				"players");
 		gameState.setPlayers(players1);
-
 		gameState.configurePlayers(singlePlayer, bluetooth);
 	}
 
@@ -326,13 +319,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 		try {
 			canvas = holder.lockCanvas();
 			synchronized (holder) {
-				gameState
-						.getTheme()
-						.getBackgroundDrawable()
-						.setBounds(0, 0, surface.getWidth(),
-								surface.getHeight());
-				gameState.getTheme().getBackgroundDrawable().draw(canvas);
-				// canvas.drawColor(Color.TRANSPARENT);
+				canvas.drawColor(gameState.getTheme().getBoardColor());
 				Paint p = new Paint();
 
 				for (Rect rectanlge : gamePlay.getRects1()) {
@@ -345,21 +332,21 @@ public class SurfaceViewActivity extends BaseActivity implements
 				}
 				p.setColor(Color.WHITE);
 				int boardIndex = 0;
+
 				for (int i = cellWidth / 2; i <= width - cellWidth / 2; i = i
 						+ cellWidth) {
 					for (int j = cellWidth / 2; j <= height - cellWidth / 2; j = j
 							+ cellWidth) {
-						canvas.drawCircle(i, j, 5, p);
 						if (i < width - cellWidth && j < height - cellWidth) {
 							int index = gameState.getTheme().getBoard()[boardIndex];
 							boardIndex++;
 							gameState
 									.getTheme()
 									.getCollectionDrawable(index)
-									.setBounds(i + cellWidth / 3,
-											j + cellWidth / 3,
-											i + cellWidth * 2 / 3,
-											j + cellWidth * 2 / 3);
+									.setBounds(i + cellWidth / 5,
+											j + cellWidth / 5,
+											i + cellWidth * 4 / 5,
+											j + cellWidth * 4 / 5);
 							gameState.getTheme().getCollectionDrawable(index)
 									.draw(canvas);
 							if (gameState.getTheme().isBonus(index))
@@ -367,19 +354,32 @@ public class SurfaceViewActivity extends BaseActivity implements
 							if (gameState.getTheme().isPanulty(index))
 								gamePlay.getPanultis().add(new Point(i, j));
 						}
+						Paint blurLinePaint = new Paint();
+						blurLinePaint.setColor(gameState.getTheme()
+								.getLineColor());
+						blurLinePaint.setStrokeWidth(8);
+						if (i < width - cellWidth)
+							canvas.drawLine(i, j, i + cellWidth, j,
+									blurLinePaint);
+						if (j < height - cellWidth)
+							canvas.drawLine(i, j, i, j + cellWidth,
+									blurLinePaint);
+						canvas.drawCircle(i, j, 5, p);
+
 					}
+
 				}
-				int i = 0;
+				int lineIndex = 0;
 				for (Line line : gamePlay.getLines()) {
 					Paint pp = new Paint();
-					if (i == gamePlay.getLines().size() - 1)
+					if (lineIndex == gamePlay.getLines().size() - 1)
 						pp.setColor(color);
 					else
 						pp.setColor(Color.WHITE);
-					pp.setStrokeWidth(5);
+					pp.setStrokeWidth(8);
 					canvas.drawLine(line.getStart().x, line.getStart().y,
 							line.getEnd().x, line.getEnd().y, pp);
-					i++;
+					lineIndex++;
 				}
 
 			}
@@ -420,17 +420,8 @@ public class SurfaceViewActivity extends BaseActivity implements
 
 	@Override
 	public void onScoreUpdate(int curScore, int marked) {
-		// score[0] = score1;
 		score[gameState.getPlayer()] = curScore;
-		// StyleSpan bss = new StyleSpan(android.graphics.Typeface.BOLD);
-		// String p1 = gameState.getCurrentPlayer().getName() + " [" + curScore
-		// + "]";
-		//
-		// SpannableString str1 = new SpannableString(p1);
-		// str1.setSpan(bss, p1.indexOf('[') + 1, p1.indexOf(']'), 0);
-
 		tvScore[gameState.getPlayer()].setText("" + curScore);
-
 		if (marked == gameState.getTotal()) {
 			displayGameOverMessage();
 		}
