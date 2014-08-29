@@ -21,6 +21,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
@@ -41,8 +42,8 @@ import com.vm.gameplay.model.Player;
 import com.vm.gameplay.service.BluetoothGameService;
 
 public class SurfaceViewActivity extends BaseActivity implements
-		SurfaceHolder.Callback, DialogCallback, AnimationCallback,
-		OnTouchListener, OnScoreListener {
+		SurfaceHolder.Callback, DialogCallback, OnTouchListener,
+		OnScoreListener {
 	private SurfaceView surface;
 	private SurfaceHolder holder;
 	private int width;
@@ -50,6 +51,8 @@ public class SurfaceViewActivity extends BaseActivity implements
 	private int cellWidth = 100;
 	private TextView tvPlayer[] = new TextView[2];
 	private TextView tvScore[] = new TextView[2];
+	private TextView tvTurn;
+	private TextView tvTimer;
 	private LinearLayout llPlayers;
 	private BluetoothGameService mGameService;
 	private boolean restart = false;
@@ -61,6 +64,9 @@ public class SurfaceViewActivity extends BaseActivity implements
 
 	@SuppressLint("NewApi")
 	public void init() {
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setContentView(R.layout.game_play_view);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -85,12 +91,9 @@ public class SurfaceViewActivity extends BaseActivity implements
 		String name = "Waiting";
 		if (!bluetooth) {
 			color = gameState.getPlayer(1).getColor();
-			name = gameState.getPlayer(1).getName() + " [0]";
+			name = gameState.getPlayer(1).getName();
 		}
 		setupPlayerTextViews(1, color, name);
-
-		tvScore[0].setCompoundDrawablesWithIntrinsicBounds(R.drawable.tern, 0,
-				0, 0);
 	}
 
 	@Override
@@ -121,13 +124,12 @@ public class SurfaceViewActivity extends BaseActivity implements
 	}
 
 	private void setupPlayerTextViews(int index, Player player) {
-		setupPlayerTextViews(index, player.getColor(), player.getName()
-				+ " [0]");
+		setupPlayerTextViews(index, player.getColor(), player.getName());
 	}
 
 	private void setupPlayerTextViews(int index, int color, String name) {
 		tvPlayer[index].setBackgroundColor(color);
-		tvScore[index].setText(name);
+		tvPlayer[index].setText(name);
 		tvScore[index].setBackgroundColor(color);
 	}
 
@@ -166,8 +168,9 @@ public class SurfaceViewActivity extends BaseActivity implements
 		tvScore[1] = (TextView) findViewById(R.id.score2);
 		tvPlayer[0] = (TextView) findViewById(R.id.player1);
 		tvPlayer[1] = (TextView) findViewById(R.id.player2);
-		llPlayers = (LinearLayout) findViewById(R.id.players);
 		surface = (SurfaceView) findViewById(R.id.mysurface);
+		tvTimer = (TextView) findViewById(R.id.timer);
+		tvTurn = (TextView) findViewById(R.id.turn);
 	}
 
 	@Override
@@ -215,10 +218,8 @@ public class SurfaceViewActivity extends BaseActivity implements
 
 	private void changePlayer() {
 		gameState.changePlayer();
-		tvScore[0].setCompoundDrawablesWithIntrinsicBounds(
-				gameState.getPlayer() == 0 ? R.drawable.tern : 0, 0, 0, 0);
-		tvScore[1].setCompoundDrawablesWithIntrinsicBounds(
-				gameState.getPlayer() == 0 ? 0 : R.drawable.tern, 0, 0, 0);
+		tvTurn.setText(String.format("%s's turn", gameState.getCurrentPlayer()
+				.getName()));
 	}
 
 	@Override
@@ -407,31 +408,29 @@ public class SurfaceViewActivity extends BaseActivity implements
 			((Computer) gameState.getPlayers().get(1)).setupMoves(height,
 					width, cellWidth);
 		gamePlay.clear();
-		tvScore[0].setText(gameState.getPlayer(0).getName() + " [0]");
-		if (gameState.isStart())
-			tvScore[1].setText(gameState.getPlayer(1).getName() + " [0]");
+		tvPlayer[0].setText(gameState.getPlayer(0).getName());
+		tvScore[0].setText("00");
+		if (gameState.isStart()) {
+			tvPlayer[1].setText(gameState.getPlayer(1).getName());
+			tvScore[1].setText("00");
+		}
 		gameState.setPlayer(0);
-		tvScore[0].setCompoundDrawablesWithIntrinsicBounds(R.drawable.tern, 0,
-				0, 0);
-		tvScore[1].setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
 		initCanvas();
-		startAnimation();
 	}
 
 	@Override
 	public void onScoreUpdate(int curScore, int marked) {
 		// score[0] = score1;
 		score[gameState.getPlayer()] = curScore;
-		StyleSpan bss = new StyleSpan(android.graphics.Typeface.BOLD);
-		String p1 = gameState.getCurrentPlayer().getName() + " [" + curScore
-				+ "]";
+		// StyleSpan bss = new StyleSpan(android.graphics.Typeface.BOLD);
+		// String p1 = gameState.getCurrentPlayer().getName() + " [" + curScore
+		// + "]";
+		//
+		// SpannableString str1 = new SpannableString(p1);
+		// str1.setSpan(bss, p1.indexOf('[') + 1, p1.indexOf(']'), 0);
 
-		SpannableString str1 = new SpannableString(p1);
-		str1.setSpan(bss, p1.indexOf('[') + 1, p1.indexOf(']'), 0);
+		tvScore[gameState.getPlayer()].setText("" + curScore);
 
-		tvScore[gameState.getPlayer()].setText(str1);
-
-		startAnimation();
 		if (marked == gameState.getTotal()) {
 			displayGameOverMessage();
 		}
@@ -449,37 +448,6 @@ public class SurfaceViewActivity extends BaseActivity implements
 	@Override
 	public void onDialogAction(int dialogId, Action action) {
 		restart();
-	}
-
-	private void startAnimation() {
-		llPlayers.startAnimation(new ScoreUpdateAnimation(this));
-	}
-
-	@Override
-	public void onAnimate(float t) {
-		int player1Score, b;
-
-		if (gamePlay.getRects1().size() == 0
-				&& gamePlay.getRects2().size() == 0) {
-			player1Score = 1;
-			b = 1;
-		} else {
-			player1Score = gamePlay.getRects1().size();
-			b = gamePlay.getRects2().size();
-		}
-
-		LayoutParams lp1 = (LayoutParams) tvPlayer[0].getLayoutParams();
-		lp1.weight = lp1.weight + (player1Score - lp1.weight) * t;
-
-		LayoutParams lp2 = (LayoutParams) tvPlayer[1].getLayoutParams();
-		lp2.weight = lp2.weight + (b - lp2.weight) * t;
-		tvPlayer[0].setLayoutParams(lp1);
-		tvPlayer[1].setLayoutParams(lp2);
-		llPlayers.setWeightSum(llPlayers.getWeightSum()
-				+ (player1Score + b - llPlayers.getWeightSum()) * t);
-		tvPlayer[0].requestLayout();
-		tvPlayer[1].requestLayout();
-		llPlayers.requestLayout();
 	}
 
 	@Override

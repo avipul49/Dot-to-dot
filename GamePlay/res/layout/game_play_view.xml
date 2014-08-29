@@ -2,30 +2,41 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical" >
+    android:background="@color/background"
+    android:orientation="vertical"
+    android:padding="5dp" >
 
     <LinearLayout
-        android:id="@+id/players"
+        android:id="@+id/status_bar"
         android:layout_width="match_parent"
-        android:layout_height="5dp"
+        android:layout_height="40dp"
         android:layout_alignParentTop="true"
-        android:weightSum="2" >
+        android:background="@android:color/white"
+        android:weightSum="4" >
 
         <TextView
-            android:id="@+id/player1"
+            android:id="@+id/turn"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="3"
+            android:gravity="start|center_vertical"
+            android:paddingLeft="10dp"
+            android:paddingRight="5dp"
+            android:text="Player&apos;s Turn"
+            android:textColor="@android:color/black"
+            android:textSize="18dp" />
+
+        <TextView
+            android:id="@+id/timer"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:gravity="center"
-            android:textColor="@android:color/white" />
-
-        <TextView
-            android:id="@+id/player2"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:textColor="@android:color/white" />
+            android:gravity="end|center_vertical"
+            android:paddingLeft="5dp"
+            android:paddingRight="10dp"
+            android:text="00:00"
+            android:textColor="@android:color/black"
+            android:textSize="18dp" />
     </LinearLayout>
 
     <SurfaceView
@@ -33,14 +44,25 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/scores"
-        android:layout_below="@+id/players" />
+        android:layout_below="@+id/status_bar" />
 
     <LinearLayout
         android:id="@+id/scores"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:weightSum="2" >
+        android:layout_marginBottom="5dp"
+        android:weightSum="8" >
+
+        <TextView
+            android:id="@+id/player1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            android:gravity="center"
+            android:padding="10dp"
+            android:text="PLayer 1"
+            android:textColor="@android:color/black" />
 
         <TextView
             android:id="@+id/score1"
@@ -49,8 +71,8 @@
             android:layout_weight="1"
             android:gravity="center"
             android:padding="10dp"
-            android:text="player"
-            android:textColor="@android:color/darker_gray" />
+            android:text="00"
+            android:textColor="@android:color/black" />
 
         <TextView
             android:id="@+id/score2"
@@ -59,8 +81,18 @@
             android:layout_weight="1"
             android:gravity="center"
             android:padding="10dp"
-            android:text="player"
-            android:textColor="@android:color/darker_gray" />
+            android:text="00"
+            android:textColor="@android:color/black" />
+
+        <TextView
+            android:id="@+id/player2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            android:gravity="center"
+            android:padding="10dp"
+            android:text="Player 2"
+            android:textColor="@android:color/black" />
     </LinearLayout>
 
 </RelativeLayout>
