@@ -143,7 +143,8 @@ public class GamePlay {
 		int point = bonuses.contains(p) ? 5 : panultis.contains(p) ? -2 : 1;
 		score[gameState.getPlayer()] = score[gameState.getPlayer()] + point;
 		marked++;
-		onScoreListener.onScoreUpdate(score[gameState.getPlayer()], marked);
+		onScoreListener.onScoreUpdate(score[gameState.getPlayer()], marked,
+				point);
 	}
 
 	private boolean findAllLine(Line line1, Line line2, Line line3) {

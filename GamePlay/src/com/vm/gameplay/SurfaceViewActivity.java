@@ -21,7 +21,12 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
+import android.view.animation.AnimationSet;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -55,6 +60,8 @@ public class SurfaceViewActivity extends BaseActivity implements
 	private GameState gameState;
 	private GamePlay gamePlay;
 	private int score[] = new int[2];
+	private TextView tvLeftScore;
+	private TextView tvRightScore;
 
 	@SuppressLint("NewApi")
 	public void init() {
@@ -77,6 +84,8 @@ public class SurfaceViewActivity extends BaseActivity implements
 		holder = surface.getHolder();
 		holder.addCallback(this);
 		surface.setOnTouchListener(this);
+		tvLeftScore.setBackgroundColor(gameState.getPlayer(0).getColor());
+		tvRightScore.setBackgroundColor(gameState.getPlayer(1).getColor());
 	}
 
 	private void setupScoreTextViews(boolean bluetooth) {
@@ -164,6 +173,8 @@ public class SurfaceViewActivity extends BaseActivity implements
 		surface = (SurfaceView) findViewById(R.id.mysurface);
 		tvTimer = (TextView) findViewById(R.id.timer);
 		tvTurn = (TextView) findViewById(R.id.turn);
+		tvLeftScore = (TextView) findViewById(R.id.left_score);
+		tvRightScore = (TextView) findViewById(R.id.right_score);
 	}
 
 	@Override
@@ -419,12 +430,51 @@ public class SurfaceViewActivity extends BaseActivity implements
 	}
 
 	@Override
-	public void onScoreUpdate(int curScore, int marked) {
+	public void onScoreUpdate(int curScore, int marked, int points) {
 		score[gameState.getPlayer()] = curScore;
-		tvScore[gameState.getPlayer()].setText("" + curScore);
+		tvScore[gameState.getPlayer()].setText(String.format("%02d", curScore));
 		if (marked == gameState.getTotal()) {
 			displayGameOverMessage();
 		}
+		startScoreAnimation(gameState.getPlayer() == 0 ? tvLeftScore
+				: tvRightScore, points);
+	}
+
+	private void startScoreAnimation(final TextView view, int points) {
+
+		Animation fadeIn = new AlphaAnimation(0, 1);
+		fadeIn.setInterpolator(new DecelerateInterpolator()); // add this
+		fadeIn.setDuration(1000);
+
+		Animation fadeOut = new AlphaAnimation(1, 0);
+		fadeOut.setInterpolator(new AccelerateInterpolator()); // and this
+		fadeOut.setStartOffset(1000);
+		fadeOut.setDuration(1000);
+
+		AnimationSet animation = new AnimationSet(false); // change to false
+		animation.addAnimation(fadeIn);
+		animation.addAnimation(fadeOut);
+		view.setAnimation(animation);
+		view.setText(String.format("%+d", points));
+		view.startAnimation(animation);
+		animation.setAnimationListener(new AnimationListener() {
+
+			@Override
+			public void onAnimationStart(Animation animation) {
+				view.setVisibility(View.VISIBLE);
+			}
+
+			@Override
+			public void onAnimationRepeat(Animation animation) {
+
+			}
+
+			@Override
+			public void onAnimationEnd(Animation animation) {
+				view.setVisibility(View.GONE);
+			}
+		});
+
 	}
 
 	private void displayGameOverMessage() {
