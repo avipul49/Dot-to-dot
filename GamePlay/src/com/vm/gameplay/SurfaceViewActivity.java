@@ -414,8 +414,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 	}
 
 	private boolean checkFrame(float x, float y) {
-		return x >= cellWidth / 2 && y >= cellWidth / 2 && x < width
-				&& y < height;
+		return x >= 0 && y >= 0 && x < width && y < height;
 	}
 
 	@Override
