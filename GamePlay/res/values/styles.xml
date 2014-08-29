@@ -24,7 +24,7 @@
 
     <style name="button">
         <item name="android:background">@drawable/button_bg</item>
-        <item name="android:textColor">@color/login_button_text</item>
+        <item name="android:textColor">@color/button_text</item>
         <item name="android:textSize">@dimen/button_text_size</item>
         <item name="android:layout_height">@dimen/login_edit_text_height</item>
         <item name="android:layout_width">match_parent</item>
