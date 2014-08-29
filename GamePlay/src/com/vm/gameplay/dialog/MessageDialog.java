@@ -64,8 +64,8 @@ public class MessageDialog extends Dialog implements
 		this.callback = callback;
 	}
 
-	public void setScores(ArrayList<Player> players, int[] scores,
-			int[] collections, String gem) {
+	public void setScores(boolean timeout, ArrayList<Player> players,
+			int[] scores, int[] collections, String gem) {
 		tvCollectionText.setText(String.format(getContext().getResources()
 				.getString(R.string.collection_text), gem));
 		tvPlayer1Name.setText(players.get(0).getName());
@@ -77,7 +77,7 @@ public class MessageDialog extends Dialog implements
 				image);
 		crown.setBounds(30, 30, 30, 30);
 		String gameOverMessage = "";
-		if (scores[0] > scores[1])
+		if (!timeout && scores[0] > scores[1])
 			gameOverMessage = players.get(0).getName() + "\nWins";
 		else
 			gameOverMessage = players.get(1).getName() + "\nWins";

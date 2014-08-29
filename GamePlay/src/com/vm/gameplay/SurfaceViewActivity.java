@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -62,6 +63,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 	private int score[] = new int[2];
 	private TextView tvLeftScore;
 	private TextView tvRightScore;
+	private CountDownTimer countDownTimer;
 
 	@SuppressLint("NewApi")
 	public void init() {
@@ -76,7 +78,6 @@ public class SurfaceViewActivity extends BaseActivity implements
 		boolean bluetooth = getIntent().getBooleanExtra("bluetooth", false);
 		boolean singlePlayer = getIntent().getBooleanExtra("singlePlayer",
 				false);
-
 		initUIElements();
 		initGameState(singlePlayer, bluetooth);
 		initBluetoothService(singlePlayer, bluetooth);
@@ -97,6 +98,13 @@ public class SurfaceViewActivity extends BaseActivity implements
 			name = gameState.getPlayer(1).getName();
 		}
 		setupPlayerTextViews(1, color, name);
+	}
+
+	private void resetTimer() {
+		if (countDownTimer != null)
+			countDownTimer.cancel();
+		countDownTimer = new PlayerTimer();
+		countDownTimer.start();
 	}
 
 	@Override
@@ -159,9 +167,9 @@ public class SurfaceViewActivity extends BaseActivity implements
 		gameState.setThemeIndex(getIntent().getIntExtra("theme", 1));
 		gameState.configureTheme(getIntent().getIntExtra("row", 7), getIntent()
 				.getIntExtra("col", 5), getIntent().getIntArrayExtra("board"));
-		ArrayList<Player> players1 = getIntent().getParcelableArrayListExtra(
+		ArrayList<Player> players = getIntent().getParcelableArrayListExtra(
 				"players");
-		gameState.setPlayers(players1);
+		gameState.setPlayers(players);
 		gameState.configurePlayers(singlePlayer, bluetooth);
 	}
 
@@ -192,6 +200,8 @@ public class SurfaceViewActivity extends BaseActivity implements
 	protected void onPause() {
 		super.onPause();
 		unregisterReceiver(receiver);
+		if (countDownTimer != null)
+			countDownTimer.cancel();
 	}
 
 	private void move(Line line) {
@@ -419,11 +429,12 @@ public class SurfaceViewActivity extends BaseActivity implements
 			((Computer) gameState.getPlayers().get(1)).setupMoves(height,
 					width, cellWidth);
 		gamePlay.clear();
-		tvPlayer[0].setText(gameState.getPlayer(0).getName());
+		// tvPlayer[0].setText(gameState.getPlayer(0).getName());
 		tvScore[0].setText("00");
 		if (gameState.isStart()) {
-			tvPlayer[1].setText(gameState.getPlayer(1).getName());
+			// tvPlayer[1].setText(gameState.getPlayer(1).getName());
 			tvScore[1].setText("00");
+			resetTimer();
 		}
 		gameState.setPlayer(0);
 		initCanvas();
@@ -434,7 +445,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 		score[gameState.getPlayer()] = curScore;
 		tvScore[gameState.getPlayer()].setText(String.format("%02d", curScore));
 		if (marked == gameState.getTotal()) {
-			displayGameOverMessage();
+			displayGameOverMessage(false);
 		}
 		startScoreAnimation(gameState.getPlayer() == 0 ? tvLeftScore
 				: tvRightScore, points);
@@ -477,10 +488,10 @@ public class SurfaceViewActivity extends BaseActivity implements
 
 	}
 
-	private void displayGameOverMessage() {
+	private void displayGameOverMessage(boolean timeout) {
 		MessageDialog dialog = new MessageDialog(this, 1);
 		dialog.setCallback(this);
-		dialog.setScores(gameState.getPlayers(), score, new int[] {
+		dialog.setScores(timeout, gameState.getPlayers(), score, new int[] {
 				gamePlay.getRects1().size(), gamePlay.getRects2().size() },
 				gameState.getTheme().getGems());
 		dialog.show();
@@ -502,6 +513,21 @@ public class SurfaceViewActivity extends BaseActivity implements
 		if (gameState.isBluetooth())
 			mGameService.stop();
 	}
+
+	private class PlayerTimer extends CountDownTimer {
+		public PlayerTimer() {
+			super(2 * 60 * 1000, 1000);
+		}
+
+		public void onTick(long millisUntilFinished) {
+			long sec = millisUntilFinished / 1000;
+			tvTimer.setText(String.format("%02d:%02d", sec / 60, sec % 60));
+		}
+
+		public void onFinish() {
+			displayGameOverMessage(true);
+		}
+	};
 
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
 		@SuppressLint("NewApi")
