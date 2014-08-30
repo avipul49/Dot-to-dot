@@ -75,16 +75,16 @@
     <LinearLayout
         android:id="@+id/scores"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="5dp"
-        android:weightSum="8" >
+        android:weightSum="14" >
 
         <TextView
             android:id="@+id/player1"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="3"
+            android:layout_height="match_parent"
+            android:layout_weight="5"
             android:gravity="center"
             android:padding="10dp"
             android:text="PLayer 1"
@@ -93,28 +93,32 @@
         <TextView
             android:id="@+id/score1"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:layout_weight="2"
             android:gravity="center"
             android:padding="10dp"
             android:text="00"
-            android:textColor="@android:color/black" />
+            android:textColor="@android:color/black"
+            android:textSize="20dp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/score2"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:layout_weight="2"
             android:gravity="center"
             android:padding="10dp"
             android:text="00"
-            android:textColor="@android:color/black" />
+            android:textColor="@android:color/black"
+            android:textSize="20dp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/player2"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="3"
+            android:layout_height="match_parent"
+            android:layout_weight="5"
             android:gravity="center"
             android:padding="10dp"
             android:text="Player 2"

@@ -13,6 +13,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -220,7 +221,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 								.getNextMove());
 					}
 				}
-			}, 300);
+			}, 1000);
 		}
 	}
 
@@ -353,7 +354,12 @@ public class SurfaceViewActivity extends BaseActivity implements
 				}
 				p.setColor(Color.WHITE);
 				int boardIndex = 0;
-
+				float strokeWidth = TypedValue.applyDimension(
+						TypedValue.COMPLEX_UNIT_DIP, 5, getResources()
+								.getDisplayMetrics());
+				float radius = TypedValue.applyDimension(
+						TypedValue.COMPLEX_UNIT_DIP, 4, getResources()
+								.getDisplayMetrics());
 				for (int i = cellWidth / 2; i <= width - cellWidth / 2; i = i
 						+ cellWidth) {
 					for (int j = cellWidth / 2; j <= height - cellWidth / 2; j = j
@@ -378,15 +384,14 @@ public class SurfaceViewActivity extends BaseActivity implements
 						Paint blurLinePaint = new Paint();
 						blurLinePaint.setColor(gameState.getTheme()
 								.getLineColor());
-						blurLinePaint.setStrokeWidth(8);
+
+						blurLinePaint.setStrokeWidth(strokeWidth);
 						if (i < width - cellWidth)
 							canvas.drawLine(i, j, i + cellWidth, j,
 									blurLinePaint);
 						if (j < height - cellWidth)
 							canvas.drawLine(i, j, i, j + cellWidth,
 									blurLinePaint);
-						canvas.drawCircle(i, j, 5, p);
-
 					}
 
 				}
@@ -397,10 +402,18 @@ public class SurfaceViewActivity extends BaseActivity implements
 						pp.setColor(color);
 					else
 						pp.setColor(Color.WHITE);
-					pp.setStrokeWidth(8);
+					pp.setStrokeWidth(strokeWidth);
 					canvas.drawLine(line.getStart().x, line.getStart().y,
 							line.getEnd().x, line.getEnd().y, pp);
 					lineIndex++;
+				}
+
+				for (int i = cellWidth / 2; i <= width - cellWidth / 2; i = i
+						+ cellWidth) {
+					for (int j = cellWidth / 2; j <= height - cellWidth / 2; j = j
+							+ cellWidth) {
+						canvas.drawCircle(i, j, radius, p);
+					}
 				}
 
 			}
