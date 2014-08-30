@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.util.TypedValue;
@@ -65,6 +66,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 	private TextView tvLeftScore;
 	private TextView tvRightScore;
 	private CountDownTimer countDownTimer;
+	private int timerCounter;
 
 	@SuppressLint("NewApi")
 	public void init() {
@@ -115,10 +117,13 @@ public class SurfaceViewActivity extends BaseActivity implements
 					"Waiting for user to join", Toast.LENGTH_SHORT).show();
 			return false;
 		}
-		if (!gameState.isMyTern()) {
-			Toast.makeText(SurfaceViewActivity.this,
-					gameState.getCurrentPlayer().getName() + "'s Turn",
-					Toast.LENGTH_SHORT).show();
+		if (!gameState.isMyTurn()) {
+			if (notMyTurnToast == null)
+				notMyTurnToast = Toast.makeText(SurfaceViewActivity.this, "",
+						Toast.LENGTH_SHORT);
+			notMyTurnToast.setText(String.format("Wait for %s's turn",
+					gameState.getCurrentPlayer().getName()));
+			notMyTurnToast.show();
 			return false;
 		}
 		if (gameState.isStart() && checkFrame(event.getX(), event.getY())) {
@@ -184,6 +189,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 		tvTurn = (TextView) findViewById(R.id.turn);
 		tvLeftScore = (TextView) findViewById(R.id.left_score);
 		tvRightScore = (TextView) findViewById(R.id.right_score);
+		notification = (TextView) findViewById(R.id.notification);
 	}
 
 	@Override
@@ -207,6 +213,8 @@ public class SurfaceViewActivity extends BaseActivity implements
 
 	private void move(Line line) {
 		if (line != null) {
+			timerCounter = 0;
+			resetTimer();
 			color = gameState.getCurrentPlayer().getColor();
 			if (isValidMove(line)) {
 				if (gamePlay.drawLine(line))
@@ -437,6 +445,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 	}
 
 	public void restart() {
+		timerCounter = 0;
 		if (gameState.isSinglePlayer())
 			((Computer) gameState.getPlayers().get(1)).setupMoves(height,
 					width, cellWidth);
@@ -456,29 +465,24 @@ public class SurfaceViewActivity extends BaseActivity implements
 	public void onScoreUpdate(int curScore, int marked, int points) {
 		score[gameState.getPlayer()] = curScore;
 		tvScore[gameState.getPlayer()].setText(String.format("%02d", curScore));
-		if (marked == gameState.getTotal()) {
+		if (isGameOver(marked)) {
+			countDownTimer.cancel();
 			displayGameOverMessage(false);
 		}
-		startScoreAnimation(gameState.getPlayer() == 0 ? tvLeftScore
-				: tvRightScore, points);
+		notification.setText(String.format("%+d", points));
+		startScoreAnimation(notification);
+		// startScoreAnimation(gameState.getPlayer() == 0 ? tvLeftScore
+		// : tvRightScore, points);
 	}
 
-	private void startScoreAnimation(final TextView view, int points) {
+	private boolean isGameOver(int marked) {
+		return marked == gameState.getTotal();
+	}
 
-		Animation fadeIn = new AlphaAnimation(0, 1);
-		fadeIn.setInterpolator(new DecelerateInterpolator()); // add this
-		fadeIn.setDuration(1000);
-
-		Animation fadeOut = new AlphaAnimation(1, 0);
-		fadeOut.setInterpolator(new AccelerateInterpolator()); // and this
-		fadeOut.setStartOffset(1000);
-		fadeOut.setDuration(1000);
-
-		AnimationSet animation = new AnimationSet(false); // change to false
-		animation.addAnimation(fadeIn);
-		animation.addAnimation(fadeOut);
+	private void startScoreAnimation(final View view) {
+		int duration = 1000;
+		AnimationSet animation = getAnimationSet(duration);
 		view.setAnimation(animation);
-		view.setText(String.format("%+d", points));
 		view.startAnimation(animation);
 		animation.setAnimationListener(new AnimationListener() {
 
@@ -497,15 +501,32 @@ public class SurfaceViewActivity extends BaseActivity implements
 				view.setVisibility(View.GONE);
 			}
 		});
+	}
 
+	private AnimationSet getAnimationSet(int duration) {
+		Animation fadeIn = new AlphaAnimation(0, 1);
+		fadeIn.setInterpolator(new DecelerateInterpolator()); // add this
+		fadeIn.setDuration(duration);
+
+		Animation fadeOut = new AlphaAnimation(1, 0);
+		fadeOut.setInterpolator(new AccelerateInterpolator()); // and this
+		fadeOut.setStartOffset(duration);
+		fadeOut.setDuration(duration);
+
+		AnimationSet animation = new AnimationSet(false); // change to false
+		animation.addAnimation(fadeIn);
+		animation.addAnimation(fadeOut);
+		return animation;
 	}
 
 	private void displayGameOverMessage(boolean timeout) {
 		MessageDialog dialog = new MessageDialog(this, 1);
 		dialog.setCallback(this);
-		dialog.setScores(timeout, gameState.getPlayers(), score, new int[] {
-				gamePlay.getRects1().size(), gamePlay.getRects2().size() },
-				gameState.getTheme().getGems());
+		dialog.setScores(timeout, gameState.getPlayer(),
+				gameState.getPlayers(), score, new int[] {
+						gamePlay.getRects1().size(),
+						gamePlay.getRects2().size() }, gameState.getTheme()
+						.getGems());
 		dialog.show();
 	}
 
@@ -528,16 +549,34 @@ public class SurfaceViewActivity extends BaseActivity implements
 
 	private class PlayerTimer extends CountDownTimer {
 		public PlayerTimer() {
-			super(2 * 60 * 1000, 1000);
+			super(30 * 1000, 1000);
+			tvTimer.setTextColor(Color.BLACK);
+			tvTimer.setTypeface(Typeface.DEFAULT);
+
 		}
 
 		public void onTick(long millisUntilFinished) {
-			long sec = millisUntilFinished / 1000;
+			long sec = (long) Math.floor(millisUntilFinished / 1000);
 			tvTimer.setText(String.format("%02d:%02d", sec / 60, sec % 60));
+			if (millisUntilFinished < 10500) {
+				AnimationSet animationSet = getAnimationSet(100);
+				tvTimer.startAnimation(animationSet);
+				if (millisUntilFinished > 9500) {
+					startScoreAnimation(findViewById(R.id.notificationImage));
+					tvTimer.setTextColor(Color.RED);
+					tvTimer.setTypeface(Typeface.DEFAULT_BOLD);
+				}
+			}
 		}
 
 		public void onFinish() {
-			displayGameOverMessage(true);
+			timerCounter++;
+			tvTimer.setText("00:00");
+			gamePlay.timePenalty(-5);
+			if (timerCounter == 3)
+				displayGameOverMessage(true);
+			else
+				resetTimer();
 		}
 	};
 
@@ -605,5 +644,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 		}
 
 	};
+	private Toast notMyTurnToast;
+	private TextView notification;
 
 }

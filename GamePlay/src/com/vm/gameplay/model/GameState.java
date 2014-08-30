@@ -86,7 +86,7 @@ public class GameState {
 		}
 	}
 
-	public boolean isMyTern() {
+	public boolean isMyTurn() {
 		return ((!bluetooth && !singlePlayer) || me == player);
 	}
 

@@ -64,8 +64,27 @@ public class MessageDialog extends Dialog implements
 		this.callback = callback;
 	}
 
-	public void setScores(boolean timeout, ArrayList<Player> players,
-			int[] scores, int[] collections, String gem) {
+	public void setScores(boolean timeout, int curentPlayer,
+			ArrayList<Player> players, int[] scores, int[] collections,
+			String gem) {
+		String gameOverMessage = "";
+		if (timeout) {
+			gameOverMessage = players.get(curentPlayer == 0 ? 1 : 0).getName()
+					+ "\nWins";
+		} else if (scores[0] > scores[1])
+			gameOverMessage = players.get(0).getName() + "\nWins";
+		else
+			gameOverMessage = players.get(1).getName() + "\nWins";
+		if (players.get(1) instanceof Computer) {
+			if (scores[0] > scores[1]) {
+				LogginUtil.logEvent(getContext(), "Game play",
+						"Game against AI", "Player wins", 0);
+			} else {
+				LogginUtil.logEvent(getContext(), "Game play",
+						"Game against AI", "Computer wins", 0);
+			}
+		}
+
 		tvCollectionText.setText(String.format(getContext().getResources()
 				.getString(R.string.collection_text), gem));
 		tvPlayer1Name.setText(players.get(0).getName());
@@ -76,35 +95,17 @@ public class MessageDialog extends Dialog implements
 		BitmapDrawable crown = new BitmapDrawable(getContext().getResources(),
 				image);
 		crown.setBounds(30, 30, 30, 30);
-		String gameOverMessage = "";
-		if (!timeout && scores[0] > scores[1])
-			gameOverMessage = players.get(0).getName() + "\nWins";
-		else
-			gameOverMessage = players.get(1).getName() + "\nWins";
 
 		tvResult.setText(gameOverMessage);
 
 		LogginUtil.logEvent(getContext(), "Game play", "Game ended",
 				gameOverMessage, 0);
 
-		if (players.get(1) instanceof Computer) {
-			if (scores[0] > scores[1]) {
-				LogginUtil.logEvent(getContext(), "Game play",
-						"Game against AI", "Player wins", 0);
-			} else {
-				LogginUtil.logEvent(getContext(), "Game play",
-						"Game against AI", "Computer wins", 0);
-			}
-		}
 		tvPlayer1Collections.setText(collections[0] + "");
 		tvPlayer2Collections.setText(collections[1] + "");
 
 		tvPlayer1Score.setText(scores[0] + "");
 		tvPlayer2Score.setText(scores[1] + "");
-
-		// llPlayer1.setBackgroundColor(players.get(0).getColor());
-		// llPlayer2.setBackgroundColor(players.get(1).getColor());
-
 	}
 
 	@Override

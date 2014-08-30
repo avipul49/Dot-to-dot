@@ -233,4 +233,9 @@ public class GamePlay {
 		this.panultis = panultis;
 	}
 
+	public void timePenalty(int points) {
+		score[gameState.getPlayer()] = score[gameState.getPlayer()] + points;
+		onScoreListener.onScoreUpdate(score[gameState.getPlayer()], marked,
+				points);
+	}
 }
