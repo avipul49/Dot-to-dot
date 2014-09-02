@@ -67,6 +67,8 @@ public class SurfaceViewActivity extends BaseActivity implements
 	private TextView tvRightScore;
 	private CountDownTimer countDownTimer;
 	private int timerCounter;
+	private int totalTimerTime = 30000;
+	private long timeRemaining = -1;
 
 	@SuppressLint("NewApi")
 	public void init() {
@@ -103,10 +105,10 @@ public class SurfaceViewActivity extends BaseActivity implements
 		setupPlayerTextViews(1, color, name);
 	}
 
-	private void resetTimer() {
+	private void resetTimer(long timeRemaining2) {
 		if (countDownTimer != null)
 			countDownTimer.cancel();
-		countDownTimer = new PlayerTimer();
+		countDownTimer = new PlayerTimer(timeRemaining2);
 		countDownTimer.start();
 	}
 
@@ -201,6 +203,8 @@ public class SurfaceViewActivity extends BaseActivity implements
 		intentFilter.addAction(FindGameActivity.STR_MESSAGE_STATE_CHANGE);
 		intentFilter.addAction(FindGameActivity.STR_MESSAGE_WRITE);
 		this.registerReceiver(receiver, intentFilter);
+		if (timeRemaining != -1)
+			resetTimer(timeRemaining);
 	}
 
 	@Override
@@ -214,7 +218,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 	private void move(Line line) {
 		if (line != null) {
 			timerCounter = 0;
-			resetTimer();
+			resetTimer(totalTimerTime);
 			color = gameState.getCurrentPlayer().getColor();
 			if (isValidMove(line)) {
 				if (gamePlay.drawLine(line))
@@ -455,7 +459,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 		if (gameState.isStart()) {
 			// tvPlayer[1].setText(gameState.getPlayer(1).getName());
 			tvScore[1].setText("00");
-			resetTimer();
+			resetTimer(totalTimerTime);
 		}
 		gameState.setPlayer(0);
 		initCanvas();
@@ -548,23 +552,24 @@ public class SurfaceViewActivity extends BaseActivity implements
 	}
 
 	private class PlayerTimer extends CountDownTimer {
-		public PlayerTimer() {
-			super(30 * 1000, 1000);
+		public PlayerTimer(long timeRemaining2) {
+			super(timeRemaining2, 1000);
 			tvTimer.setTextColor(Color.BLACK);
 			tvTimer.setTypeface(Typeface.DEFAULT);
 
 		}
 
 		public void onTick(long millisUntilFinished) {
+			timeRemaining = millisUntilFinished;
 			long sec = (long) Math.floor(millisUntilFinished / 1000);
 			tvTimer.setText(String.format("%02d:%02d", sec / 60, sec % 60));
 			if (millisUntilFinished < 10500) {
 				AnimationSet animationSet = getAnimationSet(100);
 				tvTimer.startAnimation(animationSet);
+				tvTimer.setTextColor(Color.RED);
+				tvTimer.setTypeface(Typeface.DEFAULT_BOLD);
 				if (millisUntilFinished > 9500) {
 					startScoreAnimation(findViewById(R.id.notificationImage));
-					tvTimer.setTextColor(Color.RED);
-					tvTimer.setTypeface(Typeface.DEFAULT_BOLD);
 				}
 			}
 		}
@@ -576,7 +581,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 			if (timerCounter == 3)
 				displayGameOverMessage(true);
 			else
-				resetTimer();
+				resetTimer(totalTimerTime);
 		}
 	};
 

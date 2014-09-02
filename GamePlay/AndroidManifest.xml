@@ -16,7 +16,7 @@
     <application
         android:name="com.vm.gameplay.GameApplication"
         android:allowBackup="true"
-        android:icon="@drawable/appicon"
+        android:icon="@drawable/new_icon"
         android:label="@string/app_name" >
         <activity
             android:name="com.vm.gameplay.SurfaceViewActivity"
