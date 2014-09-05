@@ -58,9 +58,12 @@ public class GameBoard {
 			canvas = holder.lockCanvas();
 			synchronized (holder) {
 				canvas.drawColor(theme.getBoardColor());
-				drawBoxes(canvas, gamePlay.getRects1());
-				drawBoxes(canvas, gamePlay.getRects2());
-
+				if (gameState.isStart()) {
+					drawBoxes(canvas, gamePlay.getRects1(), gameState
+							.getPlayers().get(0).getColor());
+					drawBoxes(canvas, gamePlay.getRects2(), gameState
+							.getPlayers().get(1).getColor());
+				}
 				final Paint p = new Paint();
 				p.setColor(Color.WHITE);
 				final float strokeWidth = TypedValue.applyDimension(
@@ -144,10 +147,10 @@ public class GameBoard {
 		}
 	}
 
-	private void drawBoxes(Canvas canvas, ArrayList<Rect> rects) {
+	private void drawBoxes(Canvas canvas, ArrayList<Rect> rects, int color) {
 		for (Rect rectanlge : rects) {
 			Paint p = new Paint();
-			p.setColor(gameState.getPlayers().get(0).getColor());
+			p.setColor(color);
 			canvas.drawRect(rectanlge, p);
 		}
 	}

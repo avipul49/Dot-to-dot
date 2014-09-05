@@ -87,15 +87,16 @@ public class SurfaceViewActivity extends BaseActivity implements
 		holder = surface.getHolder();
 		holder.addCallback(this);
 		surface.setOnTouchListener(this);
-		tvLeftScore.setBackgroundColor(gameState.getPlayer(0).getColor());
-		tvRightScore.setBackgroundColor(gameState.getPlayer(1).getColor());
+
 	}
 
 	private void setupScoreTextViews(boolean bluetooth) {
 		setupPlayerTextViews(0, gameState.getPlayer(0));
+		tvLeftScore.setBackgroundColor(gameState.getPlayer(0).getColor());
 		int color = Color.BLACK;
 		String name = "Waiting";
 		if (!bluetooth) {
+			tvRightScore.setBackgroundColor(gameState.getPlayer(1).getColor());
 			color = gameState.getPlayer(1).getColor();
 			name = gameState.getPlayer(1).getName();
 		}
@@ -511,6 +512,8 @@ public class SurfaceViewActivity extends BaseActivity implements
 				switch (Integer.parseInt(message[0])) {
 				case 0:
 					gameState.startGame(message);
+					tvRightScore.setBackgroundColor(gameState.getPlayer(1)
+							.getColor());
 					setupPlayerTextViews(1, gameState.getPlayer(1));
 					LogginUtil.logEvent(SurfaceViewActivity.this, "Game play",
 							"Game started", "Bluetooth joined", 0);

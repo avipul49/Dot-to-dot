@@ -9,8 +9,6 @@ import java.util.Set;
 import android.graphics.Color;
 import android.graphics.Point;
 
-import com.vm.gameplay.model.BoardDimensions.DrawInCellInterface;
-
 public class Computer extends Player {
 
 	private HashMap<Line, Integer> lines = new HashMap<Line, Integer>();
@@ -23,24 +21,26 @@ public class Computer extends Player {
 	public void setupMoves(BoardDimensions boardDimensions) {
 		this.boardDimensions = boardDimensions;
 		lines.clear();
-		boardDimensions.drawInCell(new DrawInCellInterface() {
-			@Override
-			public void draw(BoardDimensions boardDimensions, int i, int j,
-					int index) {
-				Line line = new Line();
-				line.setStart(new Point(i, j));
+		for (int i = boardDimensions.getxOffset(); i <= boardDimensions
+				.getxUpperLimit(); i = i + boardDimensions.getCellWidth()) {
+			for (int j = boardDimensions.getyOffset(); j <= boardDimensions
+					.getyUpperLimit(); j = j + boardDimensions.getCellWidth()) {
 				if (i + boardDimensions.getxOffset() < boardDimensions
 						.getxUpperLimit()) {
+					Line line = new Line();
+					line.setStart(new Point(i, j));
 					line.setEnd(new Point(i + boardDimensions.getCellWidth(), j));
 					lines.put(line, 0);
 				}
 				if (j + boardDimensions.getyOffset() < boardDimensions
 						.getyUpperLimit()) {
+					Line line = new Line();
+					line.setStart(new Point(i, j));
 					line.setEnd(new Point(i, j + boardDimensions.getCellWidth()));
 					lines.put(line, 0);
 				}
 			}
-		});
+		}
 	}
 
 	public void moveLine(Line line) {
