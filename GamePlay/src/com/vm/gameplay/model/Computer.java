@@ -9,36 +9,38 @@ import java.util.Set;
 import android.graphics.Color;
 import android.graphics.Point;
 
+import com.vm.gameplay.model.BoardDimensions.DrawInCellInterface;
+
 public class Computer extends Player {
 
 	private HashMap<Line, Integer> lines = new HashMap<Line, Integer>();
-	private int cellWidth;
+	private BoardDimensions boardDimensions;
 
 	public Computer() {
 		super("Computer", Color.parseColor("#FEE401"));
 	}
 
-	public void setupMoves(int height, int width, int cellWidth) {
-		this.cellWidth = cellWidth;
+	public void setupMoves(BoardDimensions boardDimensions) {
+		this.boardDimensions = boardDimensions;
 		lines.clear();
-		for (int i = cellWidth / 2; i <= width - cellWidth / 2; i = i
-				+ cellWidth) {
-			for (int j = cellWidth / 2; j <= height - cellWidth / 2; j = j
-					+ cellWidth) {
-				if (i + cellWidth < width) {
-					Line line = new Line();
-					line.setStart(new Point(i, j));
-					line.setEnd(new Point(i + cellWidth, j));
+		boardDimensions.drawInCell(new DrawInCellInterface() {
+			@Override
+			public void draw(BoardDimensions boardDimensions, int i, int j,
+					int index) {
+				Line line = new Line();
+				line.setStart(new Point(i, j));
+				if (i + boardDimensions.getxOffset() < boardDimensions
+						.getxUpperLimit()) {
+					line.setEnd(new Point(i + boardDimensions.getCellWidth(), j));
 					lines.put(line, 0);
 				}
-				if (j + cellWidth < height) {
-					Line line = new Line();
-					line.setStart(new Point(i, j));
-					line.setEnd(new Point(i, j + cellWidth));
+				if (j + boardDimensions.getyOffset() < boardDimensions
+						.getyUpperLimit()) {
+					line.setEnd(new Point(i, j + boardDimensions.getCellWidth()));
 					lines.put(line, 0);
 				}
 			}
-		}
+		});
 	}
 
 	public void moveLine(Line line) {
@@ -49,70 +51,77 @@ public class Computer extends Player {
 		int score = 0;
 		if (line.isHorizontal()) {
 			Line line1 = new Line(new Point(line.getStart().x,
-					line.getStart().y - cellWidth), line.getStart());
+					line.getStart().y - boardDimensions.getCellWidth()),
+					line.getStart());
 			Line line2 = new Line(new Point(line.getEnd().x, line.getEnd().y
-					- cellWidth), line.getEnd());
+					- boardDimensions.getCellWidth()), line.getEnd());
 			Line line3 = new Line(new Point(line.getStart().x,
-					line.getStart().y - cellWidth), new Point(line.getEnd().x,
-					line.getEnd().y - cellWidth));
+					line.getStart().y - boardDimensions.getCellWidth()),
+					new Point(line.getEnd().x, line.getEnd().y
+							- boardDimensions.getCellWidth()));
 
-			if (lineMoved(line1))
+			if (islineMoved(line1))
 				score++;
-			if (lineMoved(line2))
+			if (islineMoved(line2))
 				score++;
-			if (lineMoved(line3))
+			if (islineMoved(line3))
 				score++;
 
 			line1 = new Line(line.getStart(), new Point(line.getStart().x,
-					line.getStart().y + cellWidth));
+					line.getStart().y + boardDimensions.getCellWidth()));
 			line2 = new Line(line.getEnd(), new Point(line.getEnd().x,
-					line.getEnd().y + cellWidth));
+					line.getEnd().y + boardDimensions.getCellWidth()));
 			line3 = new Line(new Point(line.getStart().x, line.getStart().y
-					+ cellWidth), new Point(line.getEnd().x, line.getEnd().y
-					+ cellWidth));
+					+ boardDimensions.getCellWidth()), new Point(
+					line.getEnd().x, line.getEnd().y
+							+ boardDimensions.getCellWidth()));
 
 			int temp = 0;
-			if (lineMoved(line1))
+			if (islineMoved(line1))
 				temp++;
-			if (lineMoved(line2))
+			if (islineMoved(line2))
 				temp++;
-			if (lineMoved(line3))
+			if (islineMoved(line3))
 				temp++;
 			return score > temp ? score : temp;
 		} else {
-			Line line1 = new Line(new Point(line.getStart().x - cellWidth,
-					line.getStart().y), line.getStart());
-			Line line2 = new Line(new Point(line.getEnd().x - cellWidth,
-					line.getEnd().y), line.getEnd());
-			Line line3 = new Line(new Point(line.getStart().x - cellWidth,
-					line.getStart().y), new Point(line.getEnd().x - cellWidth,
-					line.getEnd().y));
-			if (lineMoved(line1))
+			Line line1 = new Line(new Point(line.getStart().x
+					- boardDimensions.getCellWidth(), line.getStart().y),
+					line.getStart());
+			Line line2 = new Line(new Point(line.getEnd().x
+					- boardDimensions.getCellWidth(), line.getEnd().y),
+					line.getEnd());
+			Line line3 = new Line(new Point(line.getStart().x
+					- boardDimensions.getCellWidth(), line.getStart().y),
+					new Point(line.getEnd().x - boardDimensions.getCellWidth(),
+							line.getEnd().y));
+			if (islineMoved(line1))
 				score++;
-			if (lineMoved(line2))
+			if (islineMoved(line2))
 				score++;
-			if (lineMoved(line3))
+			if (islineMoved(line3))
 				score++;
 
 			line1 = new Line(line.getStart(), new Point(line.getStart().x
-					+ cellWidth, line.getStart().y));
+					+ boardDimensions.getCellWidth(), line.getStart().y));
 			line2 = new Line(line.getEnd(), new Point(line.getEnd().x
-					+ cellWidth, line.getEnd().y));
-			line3 = new Line(new Point(line.getStart().x + cellWidth,
-					line.getStart().y), new Point(line.getEnd().x + cellWidth,
-					line.getEnd().y));
+					+ boardDimensions.getCellWidth(), line.getEnd().y));
+			line3 = new Line(new Point(line.getStart().x
+					+ boardDimensions.getCellWidth(), line.getStart().y),
+					new Point(line.getEnd().x + boardDimensions.getCellWidth(),
+							line.getEnd().y));
 			int temp = 0;
-			if (lineMoved(line1))
+			if (islineMoved(line1))
 				temp++;
-			if (lineMoved(line2))
+			if (islineMoved(line2))
 				temp++;
-			if (lineMoved(line3))
+			if (islineMoved(line3))
 				temp++;
 			return score > temp ? score : temp;
 		}
 	}
 
-	private boolean lineMoved(Line line) {
+	private boolean islineMoved(Line line) {
 		return lines.get(line) != null && lines.get(line) == -1;
 	}
 

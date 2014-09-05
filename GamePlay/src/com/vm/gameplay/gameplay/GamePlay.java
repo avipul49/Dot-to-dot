@@ -4,8 +4,8 @@ import java.util.ArrayList;
 
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.util.Log;
 
+import com.vm.gameplay.model.BoardDimensions;
 import com.vm.gameplay.model.Computer;
 import com.vm.gameplay.model.GameState;
 import com.vm.gameplay.model.Line;
@@ -16,21 +16,17 @@ public class GamePlay {
 	private ArrayList<Rect> rects2 = new ArrayList<Rect>();
 	private ArrayList<Point> bonuses = new ArrayList<Point>();
 	private ArrayList<Point> panultis = new ArrayList<Point>();
-	// private int width;
-	// private int height;
-	private int cellWidth = 100;
 	private GameState gameState;
 	private int score[] = new int[2];
 	private int marked;
 	private OnScoreListener onScoreListener;
+	private BoardDimensions boardDimensions;
 
-	public GamePlay(int cellWidth2, int height2, int width2,
-			GameState gameState, OnScoreListener onScoreListener) {
-		// this.width = width2;
-		// this.height = height2;
-		this.cellWidth = cellWidth2;
+	public GamePlay(BoardDimensions boardDimensions, GameState gameState,
+			OnScoreListener onScoreListener) {
 		this.gameState = gameState;
 		this.onScoreListener = onScoreListener;
+		this.boardDimensions = boardDimensions;
 	}
 
 	public boolean drawLine(Line line) {
@@ -56,78 +52,86 @@ public class GamePlay {
 			((Computer) gameState.getPlayers().get(1)).moveLine(line);
 		if (line.isHorizontal()) {
 			Line line1 = new Line(new Point(line.getStart().x,
-					line.getStart().y - cellWidth), line.getStart());
+					line.getStart().y - boardDimensions.getCellWidth()),
+					line.getStart());
 			Line line2 = new Line(new Point(line.getEnd().x, line.getEnd().y
-					- cellWidth), line.getEnd());
+					- boardDimensions.getCellWidth()), line.getEnd());
 			Line line3 = new Line(new Point(line.getStart().x,
-					line.getStart().y - cellWidth), new Point(line.getEnd().x,
-					line.getEnd().y - cellWidth));
+					line.getStart().y - boardDimensions.getCellWidth()),
+					new Point(line.getEnd().x, line.getEnd().y
+							- boardDimensions.getCellWidth()));
 			if (singlePlayer)
 				((Computer) gameState.getPlayers().get(1)).updateScores(line1,
 						line2, line3);
 
 			if (findAllLine(line1, line2, line3)) {
 				Rect rectanlge = new Rect(line.getStart().x, line.getStart().y
-						- cellWidth, line.getStart().x + cellWidth,
-						line.getStart().y);
+						- boardDimensions.getCellWidth(), line.getStart().x
+						+ boardDimensions.getCellWidth(), line.getStart().y);
 				rects.add(rectanlge);
 				found = true;
 				mark();
 			}
 
 			line1 = new Line(line.getStart(), new Point(line.getStart().x,
-					line.getStart().y + cellWidth));
+					line.getStart().y + boardDimensions.getCellWidth()));
 			line2 = new Line(line.getEnd(), new Point(line.getEnd().x,
-					line.getEnd().y + cellWidth));
+					line.getEnd().y + boardDimensions.getCellWidth()));
 			line3 = new Line(new Point(line.getStart().x, line.getStart().y
-					+ cellWidth), new Point(line.getEnd().x, line.getEnd().y
-					+ cellWidth));
+					+ boardDimensions.getCellWidth()), new Point(
+					line.getEnd().x, line.getEnd().y
+							+ boardDimensions.getCellWidth()));
 			if (singlePlayer)
 				((Computer) gameState.getPlayers().get(1)).updateScores(line1,
 						line2, line3);
 			if (findAllLine(line1, line2, line3)) {
 				Rect rectanlge = new Rect(line.getStart().x, line.getStart().y,
-						line.getStart().x + cellWidth, line.getStart().y
-								+ cellWidth);
+						line.getStart().x + boardDimensions.getCellWidth(),
+						line.getStart().y + boardDimensions.getCellWidth());
 				rects.add(rectanlge);
 				found = true;
 				mark();
 			}
 
 		} else {
-			Line line1 = new Line(new Point(line.getStart().x - cellWidth,
-					line.getStart().y), line.getStart());
-			Line line2 = new Line(new Point(line.getEnd().x - cellWidth,
-					line.getEnd().y), line.getEnd());
-			Line line3 = new Line(new Point(line.getStart().x - cellWidth,
-					line.getStart().y), new Point(line.getEnd().x - cellWidth,
-					line.getEnd().y));
+			Line line1 = new Line(new Point(line.getStart().x
+					- boardDimensions.getCellWidth(), line.getStart().y),
+					line.getStart());
+			Line line2 = new Line(new Point(line.getEnd().x
+					- boardDimensions.getCellWidth(), line.getEnd().y),
+					line.getEnd());
+			Line line3 = new Line(new Point(line.getStart().x
+					- boardDimensions.getCellWidth(), line.getStart().y),
+					new Point(line.getEnd().x - boardDimensions.getCellWidth(),
+							line.getEnd().y));
 			if (singlePlayer)
 				((Computer) gameState.getPlayers().get(1)).updateScores(line1,
 						line2, line3);
 			if (findAllLine(line1, line2, line3)) {
-				Rect rectanlge = new Rect(line.getStart().x - cellWidth,
-						line.getStart().y, line.getStart().x, line.getStart().y
-								+ cellWidth);
+				Rect rectanlge = new Rect(line.getStart().x
+						- boardDimensions.getCellWidth(), line.getStart().y,
+						line.getStart().x, line.getStart().y
+								+ boardDimensions.getCellWidth());
 				rects.add(rectanlge);
 				found = true;
 				mark();
 			}
 
 			line1 = new Line(line.getStart(), new Point(line.getStart().x
-					+ cellWidth, line.getStart().y));
+					+ boardDimensions.getCellWidth(), line.getStart().y));
 			line2 = new Line(line.getEnd(), new Point(line.getEnd().x
-					+ cellWidth, line.getEnd().y));
-			line3 = new Line(new Point(line.getStart().x + cellWidth,
-					line.getStart().y), new Point(line.getEnd().x + cellWidth,
-					line.getEnd().y));
+					+ boardDimensions.getCellWidth(), line.getEnd().y));
+			line3 = new Line(new Point(line.getStart().x
+					+ boardDimensions.getCellWidth(), line.getStart().y),
+					new Point(line.getEnd().x + boardDimensions.getCellWidth(),
+							line.getEnd().y));
 			if (singlePlayer)
 				((Computer) gameState.getPlayers().get(1)).updateScores(line1,
 						line2, line3);
 			if (findAllLine(line1, line2, line3)) {
 				Rect rectanlge = new Rect(line.getStart().x, line.getStart().y,
-						line.getStart().x + cellWidth, line.getStart().y
-								+ cellWidth);
+						line.getStart().x + boardDimensions.getCellWidth(),
+						line.getStart().y + boardDimensions.getCellWidth());
 				rects.add(rectanlge);
 				found = true;
 				mark();
@@ -167,13 +171,21 @@ public class GamePlay {
 	}
 
 	public Line getSelectedLine(float eventx, float eventy) {
-		int xM = (((int) eventx - (cellWidth / 2)) / cellWidth) * cellWidth
-				+ cellWidth / 2;
-		int yM = (((int) eventy - cellWidth / 2) / cellWidth) * cellWidth
-				+ cellWidth / 2;
+		int xM = (((int) eventx - boardDimensions.getxOffset()) / boardDimensions
+				.getCellWidth())
+				* boardDimensions.getCellWidth()
+				+ boardDimensions.getxOffset();
+		int yM = (((int) eventy - boardDimensions.getyOffset()) / boardDimensions
+				.getCellWidth())
+				* boardDimensions.getCellWidth()
+				+ boardDimensions.getyOffset();
 
-		int x = (eventx - xM) > (xM + cellWidth - eventx) ? xM + cellWidth : xM;
-		int y = (eventy - yM) > (yM + cellWidth - eventy) ? yM + cellWidth : yM;
+		int x = (eventx - xM) > (xM + boardDimensions.getCellWidth() - eventx) ? xM
+				+ boardDimensions.getCellWidth()
+				: xM;
+		int y = (eventy - yM) > (yM + boardDimensions.getCellWidth() - eventy) ? yM
+				+ boardDimensions.getCellWidth()
+				: yM;
 
 		Line line = new Line();
 		Point start = new Point(), end = new Point();
@@ -181,11 +193,11 @@ public class GamePlay {
 			start.x = x;
 			start.y = yM;
 			end.x = x;
-			end.y = yM + cellWidth;
+			end.y = yM + boardDimensions.getCellWidth();
 		} else {
 			start.x = xM;
 			start.y = y;
-			end.x = xM + cellWidth;
+			end.x = xM + boardDimensions.getCellWidth();
 			end.y = y;
 		}
 		line.setEnd(end);

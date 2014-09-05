@@ -27,6 +27,10 @@ public class GameState {
 		}
 	}
 
+	public boolean isGameOver(int marked) {
+		return marked == this.getTotal();
+	}
+
 	public String getStartGameMessage() {
 		return String.format("0::%s::%s::%s::%s::%s", players.get(0),
 				themes[themeIndex], themes[themeIndex].getRow(),

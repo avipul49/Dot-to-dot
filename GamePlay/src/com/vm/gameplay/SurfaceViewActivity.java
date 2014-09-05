@@ -6,16 +6,11 @@ import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Point;
-import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.CountDownTimer;
 import android.os.Handler;
-import android.util.TypedValue;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -35,9 +30,11 @@ import android.widget.Toast;
 
 import com.vm.gameplay.dialog.DialogCallback;
 import com.vm.gameplay.dialog.MessageDialog;
+import com.vm.gameplay.gameplay.GameBoard;
 import com.vm.gameplay.gameplay.GamePlay;
 import com.vm.gameplay.gameplay.OnScoreListener;
 import com.vm.gameplay.logging.LogginUtil;
+import com.vm.gameplay.model.BoardDimensions;
 import com.vm.gameplay.model.Computer;
 import com.vm.gameplay.model.GameState;
 import com.vm.gameplay.model.Line;
@@ -49,9 +46,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 		OnScoreListener {
 	private SurfaceView surface;
 	private SurfaceHolder holder;
-	private int width;
-	private int height;
-	private int cellWidth = 100;
+	private BoardDimensions boardDimensions = new BoardDimensions();
 	private TextView tvPlayer[] = new TextView[2];
 	private TextView tvScore[] = new TextView[2];
 	private TextView tvTurn;
@@ -59,7 +54,6 @@ public class SurfaceViewActivity extends BaseActivity implements
 	private BluetoothGameService mGameService;
 	private boolean restart = false;
 	private boolean finish = false;
-	private int color;
 	private GameState gameState;
 	private GamePlay gamePlay;
 	private int score[] = new int[2];
@@ -69,6 +63,9 @@ public class SurfaceViewActivity extends BaseActivity implements
 	private int timerCounter;
 	private int totalTimerTime = 30000;
 	private long timeRemaining = -1;
+	private Toast notMyTurnToast;
+	private TextView notification;
+	private GameBoard gameBoard;
 
 	@SuppressLint("NewApi")
 	public void init() {
@@ -128,14 +125,17 @@ public class SurfaceViewActivity extends BaseActivity implements
 			notMyTurnToast.show();
 			return false;
 		}
-		if (gameState.isStart() && checkFrame(event.getX(), event.getY())) {
+		if (gameState.isStart()
+				&& boardDimensions.checkFrame(event.getX(), event.getY())) {
 			Line line = gamePlay.getSelectedLine(event.getX(), event.getY());
 			move(line);
 			if (gameState.isBluetooth()) {
-				String out = "1::" + line.getStart().x / cellWidth + "::"
-						+ line.getStart().y / cellWidth + "::"
-						+ line.getEnd().x / cellWidth + "::" + line.getEnd().y
-						/ cellWidth;
+				String out = "1::" + line.getStart().x
+						/ boardDimensions.getCellWidth() + "::"
+						+ line.getStart().y / boardDimensions.getCellWidth()
+						+ "::" + line.getEnd().x
+						/ boardDimensions.getCellWidth() + "::"
+						+ line.getEnd().y / boardDimensions.getCellWidth();
 				mGameService.write(out.getBytes());
 			}
 		}
@@ -219,28 +219,26 @@ public class SurfaceViewActivity extends BaseActivity implements
 		if (line != null) {
 			timerCounter = 0;
 			resetTimer(totalTimerTime);
-			color = gameState.getCurrentPlayer().getColor();
-			if (isValidMove(line)) {
+			gameBoard.setLastMoveColor(gameState.getCurrentPlayer().getColor());
+			if (gameBoard.isValidMove(line)) {
 				if (gamePlay.drawLine(line))
 					changePlayer();
-				initCanvas();
+				gameBoard.drawBoard();
 			}
-			new Handler().postDelayed(new Runnable() {
-				@Override
-				public void run() {
-					if (gameState.isComputersTern()) {
-						move(((Computer) gameState.getPlayers().get(1))
-								.getNextMove());
-					}
-				}
-			}, 1000);
+			moveComputer();
 		}
 	}
 
-	private boolean isValidMove(Line line) {
-		return !gamePlay.getLines().contains(line)
-				&& checkFrame(line.getEnd().x, line.getEnd().y)
-				&& checkFrame(line.getStart().x, line.getStart().y);
+	private void moveComputer() {
+		new Handler().postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				if (gameState.isComputersTern()) {
+					move(((Computer) gameState.getPlayers().get(1))
+							.getNextMove());
+				}
+			}
+		}, 1000);
 	}
 
 	private void changePlayer() {
@@ -309,7 +307,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 
 	private void undo() {
 		gamePlay.undo();
-		initCanvas();
+		gameBoard.drawBoard();
 		changePlayer();
 	}
 
@@ -320,139 +318,47 @@ public class SurfaceViewActivity extends BaseActivity implements
 
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
-		if (height == 0) {
+		if (boardDimensions.getHeight() == 0) {
 			adjustHeightWidth();
-			gameState.getTheme().createDrawables(getResources(), height, width,
-					cellWidth);
+			gameState.getTheme().createDrawables(getResources(),
+					boardDimensions.getHeight(), boardDimensions.getWidth(),
+					boardDimensions.getCellWidth());
 			if (!gameState.isBoardCreated())
 				gameState.getTheme().createBoard(gameState.getTotal());
+			gameBoard = new GameBoard(this, surface, gamePlay, gameState,
+					boardDimensions);
 			restart();
 		} else {
-			initCanvas();
+			gameBoard.drawBoard();
 		}
 	}
 
 	private void adjustHeightWidth() {
-		height = surface.getMeasuredHeight();
-		width = surface.getMeasuredWidth();
-		cellWidth = Math.min(width / (gameState.getTheme().getCol() + 1),
-				height / (gameState.getTheme().getRow() + 1));
-		height = (gameState.getTheme().getRow() + 1) * cellWidth;
-		width = (gameState.getTheme().getCol() + 1) * cellWidth;
-		gamePlay = new GamePlay(cellWidth, height, width, gameState, this);
+		boardDimensions.setHeight(surface.getMeasuredHeight());
+		boardDimensions.setWidth(surface.getMeasuredWidth());
+		boardDimensions.setCellWidth(Math.min(boardDimensions.getWidth()
+				/ (gameState.getTheme().getCol() + 1),
+				boardDimensions.getHeight()
+						/ (gameState.getTheme().getRow() + 1)));
+		boardDimensions.setxOffset(gameState.getTheme().getRow() + 1);
+		boardDimensions.setyOffset(gameState.getTheme().getCol() + 1);
+
+		boardDimensions.setHeight((gameState.getTheme().getRow() + 1)
+				* boardDimensions.getCellWidth());
+		boardDimensions.setWidth((gameState.getTheme().getCol() + 1)
+				* boardDimensions.getCellWidth());
+		gamePlay = new GamePlay(boardDimensions, gameState, this);
 	}
 
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
-		// TODO Auto-generated method stub
-	}
-
-	private void initCanvas() {
-
-		Canvas canvas = null;
-		try {
-			canvas = holder.lockCanvas();
-			synchronized (holder) {
-				canvas.drawColor(gameState.getTheme().getBoardColor());
-				Paint p = new Paint();
-
-				for (Rect rectanlge : gamePlay.getRects1()) {
-					p.setColor(gameState.getPlayers().get(0).getColor());
-					canvas.drawRect(rectanlge, p);
-				}
-				for (Rect rectanlge : gamePlay.getRects2()) {
-					p.setColor(gameState.getPlayers().get(1).getColor());
-					canvas.drawRect(rectanlge, p);
-				}
-				p.setColor(Color.WHITE);
-				int boardIndex = 0;
-				float strokeWidth = TypedValue.applyDimension(
-						TypedValue.COMPLEX_UNIT_DIP, 5, getResources()
-								.getDisplayMetrics());
-				float radius = TypedValue.applyDimension(
-						TypedValue.COMPLEX_UNIT_DIP, 4, getResources()
-								.getDisplayMetrics());
-				for (int i = cellWidth / 2; i <= width - cellWidth / 2; i = i
-						+ cellWidth) {
-					for (int j = cellWidth / 2; j <= height - cellWidth / 2; j = j
-							+ cellWidth) {
-						if (i < width - cellWidth && j < height - cellWidth) {
-							int index = gameState.getTheme().getBoard()[boardIndex];
-							boardIndex++;
-							gameState
-									.getTheme()
-									.getCollectionDrawable(index)
-									.setBounds(i + cellWidth / 5,
-											j + cellWidth / 5,
-											i + cellWidth * 4 / 5,
-											j + cellWidth * 4 / 5);
-							gameState.getTheme().getCollectionDrawable(index)
-									.draw(canvas);
-							if (gameState.getTheme().isBonus(index))
-								gamePlay.getBonuses().add(new Point(i, j));
-							if (gameState.getTheme().isPanulty(index))
-								gamePlay.getPanultis().add(new Point(i, j));
-						}
-						Paint blurLinePaint = new Paint();
-						blurLinePaint.setColor(gameState.getTheme()
-								.getLineColor());
-
-						blurLinePaint.setStrokeWidth(strokeWidth);
-						if (i < width - cellWidth)
-							canvas.drawLine(i, j, i + cellWidth, j,
-									blurLinePaint);
-						if (j < height - cellWidth)
-							canvas.drawLine(i, j, i, j + cellWidth,
-									blurLinePaint);
-					}
-
-				}
-				int lineIndex = 0;
-				for (Line line : gamePlay.getLines()) {
-					Paint pp = new Paint();
-					if (lineIndex == gamePlay.getLines().size() - 1)
-						pp.setColor(color);
-					else
-						pp.setColor(Color.WHITE);
-					pp.setStrokeWidth(strokeWidth);
-					canvas.drawLine(line.getStart().x, line.getStart().y,
-							line.getEnd().x, line.getEnd().y, pp);
-					lineIndex++;
-				}
-
-				for (int i = cellWidth / 2; i <= width - cellWidth / 2; i = i
-						+ cellWidth) {
-					for (int j = cellWidth / 2; j <= height - cellWidth / 2; j = j
-							+ cellWidth) {
-						canvas.drawCircle(i, j, radius, p);
-					}
-				}
-
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			if (canvas != null) {
-				holder.unlockCanvasAndPost(canvas);
-			}
-		}
-	}
-
-	private boolean checkFrame(float x, float y) {
-		return x >= 0 && y >= 0 && x < width && y < height;
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.main, menu);
-		return true;
 	}
 
 	public void restart() {
 		timerCounter = 0;
 		if (gameState.isSinglePlayer())
-			((Computer) gameState.getPlayers().get(1)).setupMoves(height,
-					width, cellWidth);
+			((Computer) gameState.getPlayers().get(1))
+					.setupMoves(boardDimensions);
 		gamePlay.clear();
 		// tvPlayer[0].setText(gameState.getPlayer(0).getName());
 		tvScore[0].setText("00");
@@ -462,25 +368,19 @@ public class SurfaceViewActivity extends BaseActivity implements
 			resetTimer(totalTimerTime);
 		}
 		gameState.setPlayer(0);
-		initCanvas();
+		gameBoard.drawBoard();
 	}
 
 	@Override
 	public void onScoreUpdate(int curScore, int marked, int points) {
 		score[gameState.getPlayer()] = curScore;
 		tvScore[gameState.getPlayer()].setText(String.format("%02d", curScore));
-		if (isGameOver(marked)) {
+		if (gameState.isGameOver(marked)) {
 			countDownTimer.cancel();
 			displayGameOverMessage(false);
 		}
 		notification.setText(String.format("%+d", points));
 		startScoreAnimation(notification);
-		// startScoreAnimation(gameState.getPlayer() == 0 ? tvLeftScore
-		// : tvRightScore, points);
-	}
-
-	private boolean isGameOver(int marked) {
-		return marked == gameState.getTotal();
 	}
 
 	private void startScoreAnimation(final View view) {
@@ -537,11 +437,6 @@ public class SurfaceViewActivity extends BaseActivity implements
 	@Override
 	public void onDialogAction(int dialogId, Action action) {
 		restart();
-	}
-
-	@Override
-	public void onStop() {
-		super.onStop();
 	}
 
 	@Override
@@ -622,13 +517,17 @@ public class SurfaceViewActivity extends BaseActivity implements
 					break;
 				case 1:
 					Point start = new Point(Integer.parseInt(message[1])
-							* cellWidth + cellWidth / 2,
-							Integer.parseInt(message[2]) * cellWidth
-									+ cellWidth / 2);
+							* boardDimensions.getCellWidth()
+							+ boardDimensions.getCellWidth() / 2,
+							Integer.parseInt(message[2])
+									* boardDimensions.getCellWidth()
+									+ boardDimensions.getCellWidth() / 2);
 					Point end = new Point(Integer.parseInt(message[3])
-							* cellWidth + cellWidth / 2,
-							Integer.parseInt(message[4]) * cellWidth
-									+ cellWidth / 2);
+							* boardDimensions.getCellWidth()
+							+ boardDimensions.getCellWidth() / 2,
+							Integer.parseInt(message[4])
+									* boardDimensions.getCellWidth()
+									+ boardDimensions.getCellWidth() / 2);
 					Line line = new Line(start, end);
 					move(line);
 					break;
@@ -649,7 +548,5 @@ public class SurfaceViewActivity extends BaseActivity implements
 		}
 
 	};
-	private Toast notMyTurnToast;
-	private TextView notification;
 
 }
