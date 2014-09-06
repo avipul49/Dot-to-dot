@@ -25,15 +25,15 @@ public class Computer extends Player {
 				.getxUpperLimit(); i = i + boardDimensions.getCellWidth()) {
 			for (int j = boardDimensions.getyOffset(); j <= boardDimensions
 					.getyUpperLimit(); j = j + boardDimensions.getCellWidth()) {
-				if (i + boardDimensions.getxOffset() < boardDimensions
-						.getxUpperLimit()) {
+				if (i < boardDimensions.getWidth()
+						- boardDimensions.getCellWidth()) {
 					Line line = new Line();
 					line.setStart(new Point(i, j));
 					line.setEnd(new Point(i + boardDimensions.getCellWidth(), j));
 					lines.put(line, 0);
 				}
-				if (j + boardDimensions.getyOffset() < boardDimensions
-						.getyUpperLimit()) {
+				if (j < boardDimensions.getHeight()
+						- boardDimensions.getCellWidth()) {
 					Line line = new Line();
 					line.setStart(new Point(i, j));
 					line.setEnd(new Point(i, j + boardDimensions.getCellWidth()));

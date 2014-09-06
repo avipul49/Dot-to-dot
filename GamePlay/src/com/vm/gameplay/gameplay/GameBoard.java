@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -45,6 +46,7 @@ public class GameBoard {
 	}
 
 	public boolean isValidMove(Line line) {
+		Log.i("Computer", "************" + gamePlay.getLines().contains(line));
 		return !gamePlay.getLines().contains(line)
 				&& boardDimensions.checkFrame(line.getEnd().x, line.getEnd().y)
 				&& boardDimensions.checkFrame(line.getStart().x,
@@ -105,13 +107,13 @@ public class GameBoard {
 						blurLinePaint.setColor(theme.getLineColor());
 
 						blurLinePaint.setStrokeWidth(strokeWidth);
-						if (i < boardDimensions.getxUpperLimit()
-								- boardDimensions.getxOffset())
+						if (i < boardDimensions.getWidth()
+								- boardDimensions.getCellWidth())
 							canvas.drawLine(i, j,
 									i + boardDimensions.getCellWidth(), j,
 									blurLinePaint);
-						if (j < boardDimensions.getyUpperLimit()
-								- boardDimensions.getyOffset())
+						if (j < boardDimensions.getHeight()
+								- boardDimensions.getCellWidth())
 							canvas.drawLine(i, j, i,
 									j + boardDimensions.getCellWidth(),
 									blurLinePaint);

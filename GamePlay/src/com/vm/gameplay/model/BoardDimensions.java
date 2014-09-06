@@ -3,12 +3,13 @@ package com.vm.gameplay.model;
 public class BoardDimensions {
 	private int width;
 	private int height;
-	private int cellWidth = 100;
+	private int cellWidth;
 	private int xOffset;
 	private int yOffset;
 
 	public boolean checkFrame(float x, float y) {
 		return x >= 0 && y >= 0 && x < this.getWidth() && y < this.getHeight();
+		// return true;
 	}
 
 	public int getWidth() {
@@ -52,11 +53,11 @@ public class BoardDimensions {
 	}
 
 	public int getxUpperLimit() {
-		return width - cellWidth / 2 + xOffset;
+		return width - xOffset;
 	}
 
 	public int getyUpperLimit() {
-		return height - cellWidth / 2 + yOffset;
+		return height - yOffset;
 	}
 
 	public void drawInCell(DrawInCellInterface drawInCellInterface) {

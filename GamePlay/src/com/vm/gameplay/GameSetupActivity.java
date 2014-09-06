@@ -135,7 +135,7 @@ public class GameSetupActivity extends BaseActivity implements
 				break;
 			case R.id.medium:
 				size = "Medium";
-				row = 7;
+				row = 6;
 				col = 4;
 				break;
 			default:

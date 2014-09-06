@@ -11,6 +11,7 @@ import android.graphics.Point;
 import android.graphics.Typeface;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -131,12 +132,15 @@ public class SurfaceViewActivity extends BaseActivity implements
 			Line line = gamePlay.getSelectedLine(event.getX(), event.getY());
 			move(line);
 			if (gameState.isBluetooth()) {
-				String out = "1::" + line.getStart().x
+				String out = "1::"
+						+ (line.getStart().x - boardDimensions.getxOffset())
 						/ boardDimensions.getCellWidth() + "::"
-						+ line.getStart().y / boardDimensions.getCellWidth()
-						+ "::" + line.getEnd().x
+						+ (line.getStart().y - boardDimensions.getyOffset())
 						/ boardDimensions.getCellWidth() + "::"
-						+ line.getEnd().y / boardDimensions.getCellWidth();
+						+ (line.getEnd().x - boardDimensions.getxOffset())
+						/ boardDimensions.getCellWidth() + "::"
+						+ (line.getEnd().y - boardDimensions.getyOffset())
+						/ boardDimensions.getCellWidth();
 				mGameService.write(out.getBytes());
 			}
 		}
@@ -235,8 +239,11 @@ public class SurfaceViewActivity extends BaseActivity implements
 			@Override
 			public void run() {
 				if (gameState.isComputersTern()) {
-					move(((Computer) gameState.getPlayers().get(1))
-							.getNextMove());
+					Line computerLine = ((Computer) gameState.getPlayers().get(
+							1)).getNextMove();
+					// Log.i("Computer: ", "s: " + computerLine.getStart()
+					// + "  e: " + computerLine.getEnd());
+					move(computerLine);
 				}
 			}
 		}, 1000);
@@ -344,10 +351,10 @@ public class SurfaceViewActivity extends BaseActivity implements
 		boardDimensions.setxOffset(gameState.getTheme().getRow() + 1);
 		boardDimensions.setyOffset(gameState.getTheme().getCol() + 1);
 
-		boardDimensions.setHeight((gameState.getTheme().getRow() + 1)
-				* boardDimensions.getCellWidth());
-		boardDimensions.setWidth((gameState.getTheme().getCol() + 1)
-				* boardDimensions.getCellWidth());
+		// boardDimensions.setHeight((gameState.getTheme().getRow() + 1)
+		// * boardDimensions.getCellWidth());
+		// boardDimensions.setWidth((gameState.getTheme().getCol() + 1)
+		// * boardDimensions.getCellWidth());
 		gamePlay = new GamePlay(boardDimensions, gameState, this);
 	}
 
@@ -378,10 +385,37 @@ public class SurfaceViewActivity extends BaseActivity implements
 		tvScore[gameState.getPlayer()].setText(String.format("%02d", curScore));
 		if (gameState.isGameOver(marked)) {
 			countDownTimer.cancel();
-			displayGameOverMessage(false);
+			notification.setText("Game Over");
+			startGameOverAnimation(notification);
+			// displayGameOverMessage(false);
+		} else {
+			notification.setText(String.format("%+d", points));
+			startScoreAnimation(notification);
 		}
-		notification.setText(String.format("%+d", points));
-		startScoreAnimation(notification);
+	}
+
+	private void startGameOverAnimation(final View view) {
+		AnimationSet animation = getAnimationSet(2000);
+		view.setAnimation(animation);
+		view.startAnimation(animation);
+		animation.setAnimationListener(new AnimationListener() {
+
+			@Override
+			public void onAnimationStart(Animation animation) {
+				view.setVisibility(View.VISIBLE);
+			}
+
+			@Override
+			public void onAnimationRepeat(Animation animation) {
+
+			}
+
+			@Override
+			public void onAnimationEnd(Animation animation) {
+				view.setVisibility(View.GONE);
+				displayGameOverMessage(false);
+			}
+		});
 	}
 
 	private void startScoreAnimation(final View view) {
@@ -521,16 +555,16 @@ public class SurfaceViewActivity extends BaseActivity implements
 				case 1:
 					Point start = new Point(Integer.parseInt(message[1])
 							* boardDimensions.getCellWidth()
-							+ boardDimensions.getCellWidth() / 2,
+							+ boardDimensions.getxOffset(),
 							Integer.parseInt(message[2])
 									* boardDimensions.getCellWidth()
-									+ boardDimensions.getCellWidth() / 2);
+									+ boardDimensions.getyOffset());
 					Point end = new Point(Integer.parseInt(message[3])
 							* boardDimensions.getCellWidth()
-							+ boardDimensions.getCellWidth() / 2,
+							+ boardDimensions.getxOffset(),
 							Integer.parseInt(message[4])
 									* boardDimensions.getCellWidth()
-									+ boardDimensions.getCellWidth() / 2);
+									+ boardDimensions.getyOffset());
 					Line line = new Line(start, end);
 					move(line);
 					break;
