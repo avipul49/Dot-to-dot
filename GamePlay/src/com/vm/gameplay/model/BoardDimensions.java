@@ -6,10 +6,11 @@ public class BoardDimensions {
 	private int cellWidth;
 	private int xOffset;
 	private int yOffset;
+	private int row;
+	private int col;
 
 	public boolean checkFrame(float x, float y) {
 		return x >= 0 && y >= 0 && x < this.getWidth() && y < this.getHeight();
-		// return true;
 	}
 
 	public int getWidth() {
@@ -40,7 +41,8 @@ public class BoardDimensions {
 		return xOffset;
 	}
 
-	public void setxOffset(int row) {
+	public void setxOffset(int col) {
+		this.col = col;
 		this.xOffset = (width % cellWidth + cellWidth) / 2;
 	}
 
@@ -48,7 +50,8 @@ public class BoardDimensions {
 		return yOffset;
 	}
 
-	public void setyOffset(int col) {
+	public void setyOffset(int row) {
+		this.row = row;
 		this.yOffset = (height % cellWidth + cellWidth) / 2;
 	}
 
@@ -62,8 +65,9 @@ public class BoardDimensions {
 
 	public void drawInCell(DrawInCellInterface drawInCellInterface) {
 		int index = 0;
-		for (int i = xOffset; i <= getxUpperLimit(); i = i + cellWidth) {
-			for (int j = yOffset; j <= getyUpperLimit(); j = j + cellWidth) {
+
+		for (int i = xOffset, x = 0; x < row; i = i + cellWidth, x++) {
+			for (int j = yOffset, y = 0; y <= col; j = j + cellWidth, y++) {
 				drawInCellInterface.draw(this, i, j, index);
 				if (i < width - cellWidth && j < height - cellWidth) {
 					index++;
