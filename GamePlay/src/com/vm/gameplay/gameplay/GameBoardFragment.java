@@ -1,10 +1,11 @@
-package com.vm.gameplay;
+package com.vm.gameplay.gameplay;
 
 import java.util.ArrayList;
 
 import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
@@ -13,15 +14,13 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
-import android.util.Log;
-import android.view.MenuItem;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnTouchListener;
-import android.view.Window;
-import android.view.WindowManager;
+import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -31,12 +30,12 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.vm.gameplay.FindGameActivity;
+import com.vm.gameplay.GameApplication;
+import com.vm.gameplay.GamePlayInterface;
+import com.vm.gameplay.R;
 import com.vm.gameplay.dialog.DialogCallback;
 import com.vm.gameplay.dialog.MessageDialog;
-import com.vm.gameplay.gameplay.GameBoard;
-import com.vm.gameplay.gameplay.GamePlay;
-import com.vm.gameplay.gameplay.OnScoreListener;
-import com.vm.gameplay.logging.LogginUtil;
 import com.vm.gameplay.model.BoardDimensions;
 import com.vm.gameplay.model.Computer;
 import com.vm.gameplay.model.GameState;
@@ -44,7 +43,7 @@ import com.vm.gameplay.model.Line;
 import com.vm.gameplay.model.Player;
 import com.vm.gameplay.service.BluetoothGameService;
 
-public class SurfaceViewActivity extends BaseActivity implements
+public class GameBoardFragment extends Fragment implements
 		SurfaceHolder.Callback, DialogCallback, OnTouchListener,
 		OnScoreListener {
 	private SurfaceView surface;
@@ -54,7 +53,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 	private TextView tvScore[] = new TextView[2];
 	private TextView tvTurn;
 	private TextView tvTimer;
-	private BluetoothGameService mGameService;
+	// private BluetoothGameService mGameService;
 	private boolean restart = false;
 	private boolean finish = false;
 	private GameState gameState;
@@ -69,23 +68,39 @@ public class SurfaceViewActivity extends BaseActivity implements
 	private Toast notMyTurnToast;
 	private TextView notification;
 	private GameBoard gameBoard;
+	private Intent intent;
+	private Context context;
+	private View view;
+	private ArrayList<Player> players;
+	private int me;
+	private GamePlayInterface gamePlayInterface;
+	private int[] board;
+
+	public GameBoardFragment(Intent intent, Context context,
+			ArrayList<Player> players, int me,
+			GamePlayInterface gamePlayInterface, int[] board) {
+		this.context = context;
+		this.intent = intent;
+		this.me = me;
+		this.players = players;
+		this.gamePlayInterface = gamePlayInterface;
+		this.board = board;
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+		view = inflater.inflate(R.layout.game_play_view, container, false);
+		init();
+		return view;
+	}
 
 	@SuppressLint("NewApi")
 	public void init() {
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-				WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		setContentView(R.layout.game_play_view);
-		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-				WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-		boolean bluetooth = getIntent().getBooleanExtra("bluetooth", false);
-		boolean singlePlayer = getIntent().getBooleanExtra("singlePlayer",
-				false);
+		boolean bluetooth = true;
+		boolean singlePlayer = intent.getBooleanExtra("singlePlayer", false);
 		initUIElements();
-		initGameState(singlePlayer, bluetooth);
-		initBluetoothService(singlePlayer, bluetooth);
+		initGameState(singlePlayer, bluetooth, me);
 		setupScoreTextViews(bluetooth);
 		holder = surface.getHolder();
 		holder.addCallback(this);
@@ -98,11 +113,9 @@ public class SurfaceViewActivity extends BaseActivity implements
 		tvLeftScore.setBackgroundColor(gameState.getPlayer(0).getColor());
 		int color = Color.BLACK;
 		String name = "Waiting";
-		if (!bluetooth) {
-			tvRightScore.setBackgroundColor(gameState.getPlayer(1).getColor());
-			color = gameState.getPlayer(1).getColor();
-			name = gameState.getPlayer(1).getName();
-		}
+		tvRightScore.setBackgroundColor(gameState.getPlayer(1).getColor());
+		color = gameState.getPlayer(1).getColor();
+		name = gameState.getPlayer(1).getName();
 		setupPlayerTextViews(1, color, name);
 	}
 
@@ -116,14 +129,14 @@ public class SurfaceViewActivity extends BaseActivity implements
 	@Override
 	public boolean onTouch(View arg0, MotionEvent event) {
 		if (!gameState.isStart()) {
-			Toast.makeText(SurfaceViewActivity.this,
-					"Waiting for user to join", Toast.LENGTH_SHORT).show();
+			Toast.makeText(context, "Waiting for user to join",
+					Toast.LENGTH_SHORT).show();
 			return false;
 		}
 		if (!gameState.isMyTurn()) {
 			if (notMyTurnToast == null)
-				notMyTurnToast = Toast.makeText(SurfaceViewActivity.this, "",
-						Toast.LENGTH_SHORT);
+				notMyTurnToast = Toast
+						.makeText(context, "", Toast.LENGTH_SHORT);
 			notMyTurnToast.setText(String.format("Wait for %s's turn",
 					gameState.getCurrentPlayer().getName()));
 			notMyTurnToast.show();
@@ -143,7 +156,8 @@ public class SurfaceViewActivity extends BaseActivity implements
 						/ boardDimensions.getCellWidth() + "::"
 						+ (line.getEnd().y - boardDimensions.getyOffset())
 						/ boardDimensions.getCellWidth();
-				mGameService.write(out.getBytes());
+				gamePlayInterface.sendMove(out);
+				// mGameService.write(out.getBytes());
 			}
 		}
 		return false;
@@ -159,65 +173,48 @@ public class SurfaceViewActivity extends BaseActivity implements
 		tvScore[index].setBackgroundColor(color);
 	}
 
-	private void initBluetoothService(boolean singlePlayer, boolean bluetooth) {
-		mGameService = BluetoothGameService.getInstance(this);
-		if (bluetooth) {
-			mGameService.start();
-			LogginUtil.logEvent(this, "Game play", "Game started",
-					"Bluetooth waiting", 0);
-		} else {
-			if (singlePlayer) {
-				LogginUtil.logEvent(this, "Game play", "Game started",
-						"Single player", 0);
-			} else {
-				LogginUtil.logEvent(this, "Game play", "Game started",
-						"two player local", 0);
-			}
-		}
-	}
-
-	private void initGameState(boolean singlePlayer, boolean bluetooth) {
+	private void initGameState(boolean singlePlayer, boolean bluetooth, int me) {
 		gameState = new GameState(
-				((GameApplication) getApplicationContext()).getThemes());
-		gameState.setThemeIndex(getIntent().getIntExtra("theme", 1));
-		gameState.configureTheme(getIntent().getIntExtra("row", 7), getIntent()
-				.getIntExtra("col", 5), getIntent().getIntArrayExtra("board"));
-		ArrayList<Player> players = getIntent().getParcelableArrayListExtra(
-				"players");
+				((GameApplication) context.getApplicationContext()).getThemes());
+		gameState.setThemeIndex(intent.getIntExtra("theme", 0));
+		gameState.configureTheme(intent.getIntExtra("row", 7),
+				intent.getIntExtra("col", 5), board);
+
 		gameState.setPlayers(players);
 		gameState.configurePlayers(singlePlayer, bluetooth);
+		gameState.setMe(me);
 	}
 
 	private void initUIElements() {
-		tvScore[0] = (TextView) findViewById(R.id.score1);
-		tvScore[1] = (TextView) findViewById(R.id.score2);
-		tvPlayer[0] = (TextView) findViewById(R.id.player1);
-		tvPlayer[1] = (TextView) findViewById(R.id.player2);
-		surface = (SurfaceView) findViewById(R.id.mysurface);
-		tvTimer = (TextView) findViewById(R.id.timer);
-		tvTurn = (TextView) findViewById(R.id.turn);
-		tvLeftScore = (TextView) findViewById(R.id.left_score);
-		tvRightScore = (TextView) findViewById(R.id.right_score);
-		notification = (TextView) findViewById(R.id.notification);
+		tvScore[0] = (TextView) view.findViewById(R.id.score1);
+		tvScore[1] = (TextView) view.findViewById(R.id.score2);
+		tvPlayer[0] = (TextView) view.findViewById(R.id.player1);
+		tvPlayer[1] = (TextView) view.findViewById(R.id.player2);
+		surface = (SurfaceView) view.findViewById(R.id.mysurface);
+		tvTimer = (TextView) view.findViewById(R.id.timer);
+		tvTurn = (TextView) view.findViewById(R.id.turn);
+		tvLeftScore = (TextView) view.findViewById(R.id.left_score);
+		tvRightScore = (TextView) view.findViewById(R.id.right_score);
+		notification = (TextView) view.findViewById(R.id.notification);
 	}
 
 	@Override
-	protected void onResume() {
+	public void onResume() {
 		super.onResume();
 		IntentFilter intentFilter = new IntentFilter();
 		intentFilter.addAction(FindGameActivity.STR_MESSAGE_DEVICE_NAME);
 		intentFilter.addAction(FindGameActivity.STR_MESSAGE_READ);
 		intentFilter.addAction(FindGameActivity.STR_MESSAGE_STATE_CHANGE);
 		intentFilter.addAction(FindGameActivity.STR_MESSAGE_WRITE);
-		this.registerReceiver(receiver, intentFilter);
+		context.registerReceiver(receiver, intentFilter);
 		if (timeRemaining != -1)
 			resetTimer(timeRemaining);
 	}
 
 	@Override
-	protected void onPause() {
+	public void onPause() {
 		super.onPause();
-		unregisterReceiver(receiver);
+		context.unregisterReceiver(receiver);
 		if (countDownTimer != null)
 			countDownTimer.cancel();
 	}
@@ -257,64 +254,6 @@ public class SurfaceViewActivity extends BaseActivity implements
 				.getName()));
 	}
 
-	@Override
-	public void onBackPressed() {
-		if (finish) {
-			super.onBackPressed();
-		} else {
-			finish = true;
-			Toast.makeText(this, "Press again to go back", Toast.LENGTH_SHORT)
-					.show();
-			new Handler().postDelayed(new Runnable() {
-				@Override
-				public void run() {
-					finish = false;
-				}
-			}, 3000);
-		}
-	}
-
-	@Override
-	public boolean onMenuItemSelected(int featureId, MenuItem item) {
-		String out = null;
-		switch (item.getItemId()) {
-		case R.id.restart:
-			if (restart) {
-				restart();
-				if (gameState.isBluetooth()) {
-					out = "3::1";
-					mGameService.write(out.getBytes());
-				}
-			} else {
-				restart = true;
-				Toast.makeText(this, "Press again to restart",
-						Toast.LENGTH_SHORT).show();
-				new Handler().postDelayed(new Runnable() {
-					@Override
-					public void run() {
-						restart = false;
-					}
-				}, 3000);
-			}
-			break;
-		case R.id.undo:
-			if (gameState.canUndo()) {
-				undo();
-				if (gameState.isBluetooth()) {
-					out = "2::0";
-					mGameService.write(out.getBytes());
-				}
-			} else {
-				Toast.makeText(this, "Can't undo", Toast.LENGTH_SHORT).show();
-			}
-			break;
-
-		default:
-			break;
-		}
-		return super.onMenuItemSelected(featureId, item);
-	}
-
 	private void undo() {
 		gamePlay.undo();
 		gameBoard.drawBoard();
@@ -333,9 +272,11 @@ public class SurfaceViewActivity extends BaseActivity implements
 			gameState.getTheme().createDrawables(getResources(),
 					boardDimensions.getHeight(), boardDimensions.getWidth(),
 					boardDimensions.getCellWidth());
-			if (!gameState.isBoardCreated())
-				gameState.getTheme().createBoard(gameState.getTotal());
-			gameBoard = new GameBoard(this, surface, gamePlay, gameState,
+			if (!gameState.isBoardCreated()) {
+				gameState.createBoard();
+				gamePlayInterface.sendMove(gameState.getStartGameMessage());
+			}
+			gameBoard = new GameBoard(context, surface, gamePlay, gameState,
 					boardDimensions);
 			restart();
 		} else {
@@ -461,7 +402,7 @@ public class SurfaceViewActivity extends BaseActivity implements
 	}
 
 	private void displayGameOverMessage(boolean timeout) {
-		MessageDialog dialog = new MessageDialog(this, 1);
+		MessageDialog dialog = new MessageDialog(context, 1);
 		dialog.setCallback(this);
 		dialog.setScores(timeout, gameState.getPlayer(),
 				gameState.getPlayers(), score, new int[] {
@@ -477,10 +418,8 @@ public class SurfaceViewActivity extends BaseActivity implements
 	}
 
 	@Override
-	protected void onDestroy() {
+	public void onDestroy() {
 		super.onDestroy();
-		if (gameState.isBluetooth())
-			mGameService.stop();
 	}
 
 	private class PlayerTimer extends CountDownTimer {
@@ -501,7 +440,8 @@ public class SurfaceViewActivity extends BaseActivity implements
 				tvTimer.setTextColor(Color.RED);
 				tvTimer.setTypeface(Typeface.DEFAULT_BOLD);
 				if (millisUntilFinished > 9500) {
-					startScoreAnimation(findViewById(R.id.notificationImage));
+					startScoreAnimation(view
+							.findViewById(R.id.notificationImage));
 				}
 			}
 		}
@@ -527,14 +467,12 @@ public class SurfaceViewActivity extends BaseActivity implements
 				switch (intent.getIntExtra("state",
 						BluetoothGameService.STATE_NONE)) {
 				case BluetoothGameService.STATE_CONNECTED:
-					mGameService
-							.write(gameState.getStartGameInstructionBytes());
 					break;
 				case BluetoothGameService.STATE_CONNECTING:
 					break;
 				case BluetoothGameService.STATE_LISTEN:
 				case BluetoothGameService.STATE_NONE:
-					finish();
+					// finish();
 					break;
 				}
 				break;
@@ -542,17 +480,11 @@ public class SurfaceViewActivity extends BaseActivity implements
 				break;
 			case FindGameActivity.MESSAGE_READ:
 				byte[] readBuf = (byte[]) intent.getByteArrayExtra("data");
-				String readMessage = new String(readBuf, 0, intent.getIntExtra(
-						"length", 0));
+				String readMessage = new String(readBuf);
 				String[] message = readMessage.split("::");
 				switch (Integer.parseInt(message[0])) {
 				case 0:
-					gameState.startGame(message);
-					tvRightScore.setBackgroundColor(gameState.getPlayer(1)
-							.getColor());
-					setupPlayerTextViews(1, gameState.getPlayer(1));
-					LogginUtil.logEvent(SurfaceViewActivity.this, "Game play",
-							"Game started", "Bluetooth joined", 0);
+
 					break;
 				case 1:
 					Point start = new Point(Integer.parseInt(message[1])

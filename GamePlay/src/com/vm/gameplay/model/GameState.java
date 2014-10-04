@@ -32,9 +32,9 @@ public class GameState {
 	}
 
 	public String getStartGameMessage() {
-		return String.format("0::%s::%s::%s::%s::%s", players.get(0),
-				themes[themeIndex], themes[themeIndex].getRow(),
-				themes[themeIndex].getCol(), themes[themeIndex].getId());
+		return String.format("0::%s::%s::%s::%s", themes[themeIndex],
+				themes[themeIndex].getRow(), themes[themeIndex].getCol(),
+				themes[themeIndex].getId());
 	}
 
 	public byte[] getStartGameInstructionBytes() {
@@ -192,6 +192,10 @@ public class GameState {
 
 	public void setMe(int me) {
 		this.me = me;
+	}
+
+	public void createBoard() {
+		this.getTheme().createBoard(getTotal());
 	}
 
 }

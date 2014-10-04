@@ -7,6 +7,7 @@ import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 
+import com.google.example.games.tq.MainActivity;
 import com.vm.gameplay.logging.LogginUtil;
 
 public class MainMenuActivity extends BaseActivity implements OnClickListener {
@@ -43,17 +44,19 @@ public class MainMenuActivity extends BaseActivity implements OnClickListener {
 					"Multiplayer local game", 0);
 			break;
 		case R.id.join_bluetooth:
-			intent = new Intent(this, FindGameActivity.class);
-			LogginUtil.logEvent(this, "User action", "Game selected",
-					"Join bluetooth game", 0);
-			if (mBluetoothAdapter.isEnabled()) {
-				// ensureDiscoverable();
-				startActivity(intent);
-			} else {
-				Intent enableIntent = new Intent(
-						BluetoothAdapter.ACTION_REQUEST_ENABLE);
-				startActivityForResult(enableIntent, 0);
-			}
+			// intent = new Intent(this, FindGameActivity.class);
+			// LogginUtil.logEvent(this, "User action", "Game selected",
+			// "Join bluetooth game", 0);
+			// if (mBluetoothAdapter.isEnabled()) {
+			// // ensureDiscoverable();
+			// startActivity(intent);
+			// } else {
+			// Intent enableIntent = new Intent(
+			// BluetoothAdapter.ACTION_REQUEST_ENABLE);
+			// startActivityForResult(enableIntent, 0);
+			// }
+			intent = new Intent(this, MainActivity.class);
+			startActivity(intent);
 			break;
 		case R.id.start_bluetooth:
 			intent = new Intent(this, GameSetupActivity.class);
