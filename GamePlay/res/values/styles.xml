@@ -71,7 +71,7 @@
 
     <style name="LLScreen" parent="@style/GameScreen">
         <item name="android:orientation">vertical</item>
-        <item name="android:gravity">center</item>
+        <item name="android:gravity">bottom</item>
     </style>
 
     <style name="GameplayScreen" parent="@style/LLScreen">

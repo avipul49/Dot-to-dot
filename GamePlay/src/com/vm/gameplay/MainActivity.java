@@ -1,19 +1,4 @@
-/* Copyright (C) 2013 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.google.example.games.tq;
+package com.vm.gameplay;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,12 +10,13 @@ import java.util.Set;
 import android.app.Activity;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
 
@@ -48,27 +34,21 @@ import com.google.android.gms.games.multiplayer.realtime.RoomConfig;
 import com.google.android.gms.games.multiplayer.realtime.RoomStatusUpdateListener;
 import com.google.android.gms.games.multiplayer.realtime.RoomUpdateListener;
 import com.google.example.games.basegameutils.BaseGameActivity;
-import com.vm.gameplay.FindGameActivity;
-import com.vm.gameplay.GamePlayInterface;
-import com.vm.gameplay.R;
 import com.vm.gameplay.gameplay.GameBoardFragment;
+import com.vm.gameplay.logging.LogginUtil;
 import com.vm.gameplay.model.Player;
 import com.vm.gameplay.model.Theme;
 
-/**
- * Trivial quest. A sample game that sets up the Google Play game services API
- * and allows the user to click a button to win (yes, incredibly epic). Even
- * though winning the game is fun, the purpose of this sample is to illustrate
- * the simplest possible game that uses the API.
- *
- * @author Bruno Oliveira (Google)
- *
- */
 public class MainActivity extends BaseGameActivity implements
 		View.OnClickListener, RealTimeMessageReceivedListener,
 		RoomStatusUpdateListener, RoomUpdateListener,
 		OnInvitationReceivedListener, GamePlayInterface {
 
+	private static final String LEADERBOARD_ID = "CgkI1permasHEAIQCQ";
+
+	private static final int SECOND_PLAYER_COLOUR = Color.parseColor("#FEE401");
+
+	private static final int FIRST_PLAYER_COLOUR = Color.parseColor("#AFE90C");
 	/*
 	 * API INTEGRATION SECTION. This section contains the code that integrates
 	 * the game with the Google Play game services API.
@@ -82,6 +62,8 @@ public class MainActivity extends BaseGameActivity implements
 	final static int RC_SELECT_PLAYERS = 10000;
 	final static int RC_INVITATION_INBOX = 10001;
 	final static int RC_WAITING_ROOM = 10002;
+
+	private static final int REQUEST_LEADERBOARD = 10003;
 
 	// Room ID where the currently active game is taking place; null if we're
 	// not playing.
@@ -108,7 +90,9 @@ public class MainActivity extends BaseGameActivity implements
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		enableDebugLog(ENABLE_DEBUG, TAG);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		super.onCreate(savedInstanceState);
+		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		setContentView(R.layout.activity_main);
 
 		// set up a click listener for everything we care about
@@ -155,12 +139,27 @@ public class MainActivity extends BaseGameActivity implements
 		Intent intent;
 
 		switch (v.getId()) {
+		case R.id.local:
+			// MessageDialog md = new MessageDialog(this, 0);
+			// md.show();
+			// intent = new Intent(this, GameSetupActivity.class);
+			// startActivity(intent);
+			// LogginUtil.logEvent(this, "User action", "Game selected",
+			// "Multiplayer local game", 0);
+			// break;
 		case R.id.button_single_player:
 		case R.id.button_single_player_2:
-			// play a single-player game
-			resetGameVars();
-			startGame(false);
+			LogginUtil.logEvent(this, "User action", "Game selected",
+					"Single player game", 0);
+			ArrayList<Player> players = new ArrayList<Player>();
+			com.google.android.gms.games.Player player = Games.Players
+					.getCurrentPlayer(getApiClient());
+			Player gpPLayer = new Player(player.getDisplayName(),
+					FIRST_PLAYER_COLOUR);
+			players.add(gpPLayer);
+			startGamePlay(null, players, 0, true);
 			break;
+
 		case R.id.button_sign_in:
 			// user wants to sign in
 			if (!verifyPlaceholderIdsReplaced()) {
@@ -177,7 +176,7 @@ public class MainActivity extends BaseGameActivity implements
 		case R.id.button_invite_players:
 			// show list of invitable players
 			intent = Games.RealTimeMultiplayer.getSelectOpponentsIntent(
-					getApiClient(), 1, 3);
+					getApiClient(), 1, 1);
 			switchToScreen(R.id.screen_wait);
 			startActivityForResult(intent, RC_SELECT_PLAYERS);
 			break;
@@ -251,6 +250,8 @@ public class MainActivity extends BaseGameActivity implements
 				// something else (like minimizing the waiting room UI).
 				leaveRoom();
 			}
+			break;
+		case REQUEST_LEADERBOARD:
 			break;
 		}
 	}
@@ -374,7 +375,8 @@ public class MainActivity extends BaseGameActivity implements
 	}
 
 	// Leave the room.
-	void leaveRoom() {
+	@Override
+	public void leaveRoom() {
 		Log.d(TAG, "Leaving room.");
 		mSecondsLeft = 0;
 		stopKeepingScreenOn();
@@ -383,6 +385,8 @@ public class MainActivity extends BaseGameActivity implements
 			mRoomId = null;
 			switchToScreen(R.id.screen_wait);
 		} else {
+			startActivityForResult(Games.Leaderboards.getLeaderboardIntent(
+					getApiClient(), LEADERBOARD_ID), REQUEST_LEADERBOARD);
 			switchToMainScreen();
 		}
 	}
@@ -601,27 +605,12 @@ public class MainActivity extends BaseGameActivity implements
 		mMultiplayer = multiplayer;
 		updateScoreDisplay();
 		broadcastScore(false);
-		switchToScreen(R.id.screen_game);
+		// switchToScreen(R.id.screen_game);
 		ArrayList<Player> players = new ArrayList<Player>();
 		int me = 1;
 		if (mCreatorId.equals(mMyId)) {
 			me = 0;
-			for (Participant participant : mRoom.getParticipants()) {
-
-				if (participant.getParticipantId().equals(mCreatorId)) {
-					Player player = new Player(participant.getDisplayName(),
-							Color.parseColor("#AFE90C"));
-					players.add(0, player);
-				} else {
-					Player player = new Player(participant.getDisplayName(),
-							Color.parseColor("#FEE401"));
-					players.add(player);
-				}
-			}
-			mFragment = new GameBoardFragment(new Intent(), this, players, me,
-					this, null);
-			FragmentTransaction ft = getFragmentManager().beginTransaction();
-			ft.replace(R.id.screen_game, mFragment).commit();
+			startGamePlay(null, players, me, false);
 		}
 		// run the gameTick() method every second to update the game.
 		// final Handler h = new Handler();
@@ -685,22 +674,8 @@ public class MainActivity extends BaseGameActivity implements
 				theme.setId(Integer.parseInt(message[4]));
 			}
 			int me = 1;
-			for (Participant participant : mRoom.getParticipants()) {
-
-				if (participant.getParticipantId().equals(mCreatorId)) {
-					Player player = new Player(participant.getDisplayName(),
-							Color.parseColor("#AFE90C"));
-					players.add(0, player);
-				} else {
-					Player player = new Player(participant.getDisplayName(),
-							Color.parseColor("#FEE401"));
-					players.add(player);
-				}
-			}
-			mFragment = new GameBoardFragment(new Intent(), this, players, me,
-					this, theme.getBoard());
-			FragmentTransaction ft = getFragmentManager().beginTransaction();
-			ft.replace(R.id.screen_game, mFragment).commit();
+			boolean singlePlayer = false;
+			startGamePlay(theme.getBoard(), players, me, singlePlayer);
 			break;
 		case 1:
 			Intent intent = new Intent();
@@ -742,6 +717,28 @@ public class MainActivity extends BaseGameActivity implements
 		// }
 	}
 
+	private void startGamePlay(int[] board, ArrayList<Player> players, int me,
+			boolean singlePlayer) {
+		switchToScreen(R.id.screen_game);
+		if (!singlePlayer)
+			for (Participant participant : mRoom.getParticipants()) {
+
+				if (participant.getParticipantId().equals(mCreatorId)) {
+					Player player = new Player(participant.getDisplayName(),
+							FIRST_PLAYER_COLOUR);
+					players.add(0, player);
+				} else {
+					Player player = new Player(participant.getDisplayName(),
+							SECOND_PLAYER_COLOUR);
+					players.add(player);
+				}
+			}
+		mFragment = new GameBoardFragment(new Intent(), this, players, me,
+				this, board, singlePlayer);
+		FragmentTransaction ft = getFragmentManager().beginTransaction();
+		ft.replace(R.id.screen_game, mFragment).commit();
+	}
+
 	// Broadcast my score to everybody else.
 	public void broadcastScore(boolean finalScore) {
 		if (!mMultiplayer)
@@ -780,7 +777,7 @@ public class MainActivity extends BaseGameActivity implements
 			R.id.button_invite_players, R.id.button_quick_game,
 			R.id.button_see_invitations, R.id.button_sign_in,
 			R.id.button_sign_out, R.id.button_single_player,
-			R.id.button_single_player_2 };
+			R.id.button_single_player_2, R.id.local };
 
 	// This array lists all the individual screens our game has.
 	final static int[] SCREENS = { R.id.screen_game, R.id.screen_main,
@@ -906,13 +903,22 @@ public class MainActivity extends BaseGameActivity implements
 
 	@Override
 	public void sendMove(String message) {
-		for (Participant p : mParticipants) {
-			if (p.getParticipantId().equals(mMyId))
-				continue;
-			if (p.getStatus() != Participant.STATUS_JOINED)
-				continue;
-			Games.RealTimeMultiplayer.sendReliableMessage(getApiClient(), null,
-					message.getBytes(), mRoomId, p.getParticipantId());
+		if (mParticipants != null) {
+			for (Participant p : mParticipants) {
+				if (p.getParticipantId().equals(mMyId))
+					continue;
+				if (p.getStatus() != Participant.STATUS_JOINED)
+					continue;
+				Games.RealTimeMultiplayer
+						.sendReliableMessage(getApiClient(), null,
+								message.getBytes(), mRoomId,
+								p.getParticipantId());
+			}
 		}
+	}
+
+	@Override
+	public void gameOver(int score) {
+		Games.Leaderboards.submitScore(getApiClient(), LEADERBOARD_ID, score);
 	}
 }

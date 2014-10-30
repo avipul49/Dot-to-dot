@@ -7,7 +7,6 @@ import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 
-import com.google.example.games.tq.MainActivity;
 import com.vm.gameplay.logging.LogginUtil;
 
 public class MainMenuActivity extends BaseActivity implements OnClickListener {

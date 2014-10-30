@@ -129,8 +129,8 @@
         android:id="@+id/start_game"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:layout_margin="5dp"
+        android:layout_alignParentBottom="true"
         android:text="Start Game" />
 
 </RelativeLayout>

@@ -18,7 +18,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    android:background="@android:color/white" >
 
     <!-- SIGN-IN SCREEN -->
 
@@ -46,47 +47,46 @@
         android:id="@+id/screen_main"
         style="@style/LLScreen" >
 
-        <TextView style="@style/GameTitle" />
-
         <Button
             android:id="@+id/button_single_player_2"
-            style="@style/MainScreenButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
             android:text="@string/single_player" />
 
-        <TextView
-            style="@style/MainScreenButtonBlurb"
-            android:text="@string/single_player_explanation" />
+        <Button
+            android:id="@+id/local"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:text="Multi player game" />
 
         <Button
             android:id="@+id/button_quick_game"
-            style="@style/MainScreenButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
             android:text="@string/quick_game" />
-
-        <TextView
-            style="@style/MainScreenButtonBlurb"
-            android:text="@string/quick_game_explanation" />
 
         <Button
             android:id="@+id/button_invite_players"
-            style="@style/MainScreenButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
             android:text="@string/invite_players" />
-
-        <TextView
-            style="@style/MainScreenButtonBlurb"
-            android:text="@string/invite_players_explanation" />
 
         <Button
             android:id="@+id/button_see_invitations"
-            style="@style/MainScreenButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
             android:text="@string/see_invitations" />
-
-        <TextView
-            style="@style/MainScreenButtonBlurb"
-            android:text="@string/see_invitations_explanation" />
 
         <Button
             android:id="@+id/button_sign_out"
-            style="@style/SignOutButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
             android:text="@string/sign_out" />
     </LinearLayout>
 

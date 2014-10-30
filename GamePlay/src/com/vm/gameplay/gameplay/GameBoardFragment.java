@@ -78,13 +78,15 @@ public class GameBoardFragment extends Fragment implements
 
 	public GameBoardFragment(Intent intent, Context context,
 			ArrayList<Player> players, int me,
-			GamePlayInterface gamePlayInterface, int[] board) {
+			GamePlayInterface gamePlayInterface, int[] board,
+			boolean isSinglePlayer) {
 		this.context = context;
 		this.intent = intent;
 		this.me = me;
 		this.players = players;
 		this.gamePlayInterface = gamePlayInterface;
 		this.board = board;
+		this.singlePlayer = isSinglePlayer;
 	}
 
 	@Override
@@ -98,7 +100,6 @@ public class GameBoardFragment extends Fragment implements
 	@SuppressLint("NewApi")
 	public void init() {
 		boolean bluetooth = true;
-		boolean singlePlayer = intent.getBooleanExtra("singlePlayer", false);
 		initUIElements();
 		initGameState(singlePlayer, bluetooth, me);
 		setupScoreTextViews(bluetooth);
@@ -183,6 +184,8 @@ public class GameBoardFragment extends Fragment implements
 		gameState.setPlayers(players);
 		gameState.configurePlayers(singlePlayer, bluetooth);
 		gameState.setMe(me);
+		tvTurn.setText(String.format("%s's turn", gameState.getCurrentPlayer()
+				.getName()));
 	}
 
 	private void initUIElements() {
@@ -306,6 +309,9 @@ public class GameBoardFragment extends Fragment implements
 	}
 
 	public void restart() {
+		if (gameOverDialog != null && gameOverDialog.isShowing()) {
+			gameOverDialog.dismiss();
+		}
 		timerCounter = 0;
 		if (gameState.isSinglePlayer())
 			((Computer) gameState.getPlayers().get(1))
@@ -328,6 +334,8 @@ public class GameBoardFragment extends Fragment implements
 		tvScore[gameState.getPlayer()].setText(String.format("%02d", curScore));
 		if (gameState.isGameOver(marked)) {
 			countDownTimer.cancel();
+			if (gameState.isSinglePlayer())
+				gamePlayInterface.gameOver(score[0] - score[1]);
 			notification.setText("Game Over");
 			startGameOverAnimation(notification);
 			// displayGameOverMessage(false);
@@ -402,19 +410,27 @@ public class GameBoardFragment extends Fragment implements
 	}
 
 	private void displayGameOverMessage(boolean timeout) {
-		MessageDialog dialog = new MessageDialog(context, 1);
-		dialog.setCallback(this);
-		dialog.setScores(timeout, gameState.getPlayer(),
-				gameState.getPlayers(), score, new int[] {
-						gamePlay.getRects1().size(),
-						gamePlay.getRects2().size() }, gameState.getTheme()
-						.getGems());
-		dialog.show();
+		gameOverDialog = new MessageDialog(context, 1);
+		gameOverDialog.setCallback(this);
+		gameOverDialog.setScores(timeout, gameState.getPlayer(), gameState
+				.getPlayers(), score, new int[] { gamePlay.getRects1().size(),
+				gamePlay.getRects2().size() }, gameState.getTheme().getGems());
+		gameOverDialog.show();
 	}
 
 	@Override
 	public void onDialogAction(int dialogId, Action action) {
-		restart();
+		switch (action) {
+		case LEAVE:
+			gamePlayInterface.leaveRoom();
+			break;
+		case RESTART:
+			gamePlayInterface.sendMove("3::1");
+			restart();
+			break;
+		default:
+			break;
+		}
 	}
 
 	@Override
@@ -519,5 +535,7 @@ public class GameBoardFragment extends Fragment implements
 		}
 
 	};
+	private MessageDialog gameOverDialog;
+	private boolean singlePlayer;
 
 }

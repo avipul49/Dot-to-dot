@@ -24,10 +24,10 @@
         android:id="@id/stats"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/ok"
+        android:layout_above="@+id/ll_actions"
+        android:layout_margin="5dp"
         android:background="@color/primary_color"
         android:gravity="bottom"
-        android:layout_margin="5dp"
         android:orientation="vertical" >
 
         <LinearLayout
@@ -122,16 +122,37 @@
         </LinearLayout>
     </LinearLayout>
 
-    <Button
-        android:id="@+id/ok"
+    <LinearLayout
+        android:id="@+id/ll_actions"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_margin="5dp"
-        android:background="@color/primary_color"
-        android:padding="7dp"
-        android:text="Ok"
-        android:textColor="@android:color/white"
-        android:textSize="30sp" />
+        android:orientation="horizontal"
+        android:weightSum="2" >
+
+        <Button
+            android:id="@+id/leave"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:background="@color/primary_color"
+            android:padding="7dp"
+            android:text="Leave"
+            android:textColor="@android:color/white"
+            android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/restart"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:background="@color/primary_color"
+            android:padding="7dp"
+            android:text="Restart"
+            android:textColor="@android:color/white"
+            android:textSize="20sp" />
+    </LinearLayout>
 
 </RelativeLayout>

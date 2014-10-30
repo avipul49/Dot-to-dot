@@ -55,7 +55,9 @@ public class MessageDialog extends Dialog implements
 		llPlayer1 = (LinearLayout) findViewById(R.id.player_1_row);
 		llPlayer2 = (LinearLayout) findViewById(R.id.player_2_row);
 		tvResult = (TextView) findViewById(R.id.result);
-		findViewById(R.id.ok).setOnClickListener(this);
+		findViewById(R.id.leave).setOnClickListener(this);
+		findViewById(R.id.restart).setOnClickListener(this);
+
 		// findViewById(R.id.root).setAlpha(200);
 
 	}
@@ -111,7 +113,16 @@ public class MessageDialog extends Dialog implements
 	@Override
 	public void onClick(View v) {
 		dismiss();
-		callback.onDialogAction(1, Action.ACTION0);
+		switch (v.getId()) {
+		case R.id.leave:
+			callback.onDialogAction(1, Action.LEAVE);
+			break;
+		case R.id.restart:
+			callback.onDialogAction(1, Action.RESTART);
+			break;
+		default:
+			break;
+		}
 	}
 
 }
