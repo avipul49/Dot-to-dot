@@ -8,7 +8,7 @@ import android.annotation.SuppressLint;
 public class GameState {
 	private boolean canUndo = false;
 	private ArrayList<Player> players;
-	private boolean bluetooth = false, start = false;
+	private boolean isOnline = false, start = false;
 	private boolean singlePlayer = false;
 	private Theme[] themes;
 	private int themeIndex = 1;
@@ -24,6 +24,14 @@ public class GameState {
 		themes[themeIndex].setCol(cols);
 		if (board != null) {
 			themes[themeIndex].setBoard(board);
+		}
+	}
+
+	public void configureTheme(Theme theme) {
+		themes[themeIndex].setRow(theme.getRow());
+		themes[themeIndex].setCol(theme.getCol());
+		if (theme.getBoard() != null) {
+			themes[themeIndex].setBoard(theme.getBoard());
 		}
 	}
 
@@ -66,10 +74,10 @@ public class GameState {
 		start = true;
 	};
 
-	public void configurePlayers(boolean singlePlayer, boolean isBluetooth) {
+	public void configurePlayers(boolean singlePlayer, boolean isOnline) {
 
 		this.singlePlayer = singlePlayer;
-		this.bluetooth = isBluetooth;
+		this.isOnline = isOnline;
 		if (players.get(0).getName().isEmpty()) {
 			players.get(0).setName("Player 1");
 		}
@@ -91,7 +99,7 @@ public class GameState {
 	}
 
 	public boolean isMyTurn() {
-		return ((!bluetooth && !singlePlayer) || me == player);
+		return ((!isOnline && !singlePlayer) || me == player);
 	}
 
 	public Player getCurrentPlayer() {
@@ -107,11 +115,12 @@ public class GameState {
 	}
 
 	public boolean canUndo() {
-		return !singlePlayer && canUndo && (!bluetooth || me != player);
+		return !singlePlayer && canUndo && (!isOnline || me != player);
 	}
 
 	public boolean isBoardCreated() {
-		return bluetooth && me == 1;
+		// return isOnline && me == 1;
+		return themes[themeIndex].getBoard() != null;
 	}
 
 	public boolean isCanUndo() {
@@ -131,11 +140,11 @@ public class GameState {
 	}
 
 	public boolean isBluetooth() {
-		return bluetooth;
+		return isOnline;
 	}
 
 	public void setBluetooth(boolean bluetooth) {
-		this.bluetooth = bluetooth;
+		this.isOnline = bluetooth;
 	}
 
 	public boolean isStart() {
@@ -195,7 +204,11 @@ public class GameState {
 	}
 
 	public void createBoard() {
-		this.getTheme().createBoard(getTotal());
+		this.getTheme().createBoard();
+	}
+
+	public void createQuickBoard() {
+		this.getTheme().createQuickBoard();
 	}
 
 }

@@ -1,18 +1,17 @@
 package com.vm.gameplay;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import android.app.Activity;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -49,6 +48,9 @@ public class MainActivity extends BaseGameActivity implements
 	private static final int SECOND_PLAYER_COLOUR = Color.parseColor("#FEE401");
 
 	private static final int FIRST_PLAYER_COLOUR = Color.parseColor("#AFE90C");
+	private String name = "Player 1";
+	private boolean isOnline;
+	private boolean quickGame;
 	/*
 	 * API INTEGRATION SECTION. This section contains the code that integrates
 	 * the game with the Google Play game services API.
@@ -56,7 +58,7 @@ public class MainActivity extends BaseGameActivity implements
 
 	// Debug tag
 	final static boolean ENABLE_DEBUG = true;
-	final static String TAG = "ButtonClicker2000";
+	final static String TAG = "DotToDOt";
 
 	// Request codes for the UIs that we show with startActivityForResult:
 	final static int RC_SELECT_PLAYERS = 10000;
@@ -109,6 +111,9 @@ public class MainActivity extends BaseGameActivity implements
 	@Override
 	public void onSignInFailed() {
 		Log.d(TAG, "Sign-in failed.");
+		SharedPreferences settings = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		name = settings.getString("name", "Player 1");
 		switchToScreen(R.id.screen_sign_in);
 	}
 
@@ -119,12 +124,13 @@ public class MainActivity extends BaseGameActivity implements
 	@Override
 	public void onSignInSucceeded() {
 		Log.d(TAG, "Sign-in succeeded.");
+		isOnline = true;
 
 		// register listener so we are notified if we receive an invitation to
 		// play
 		// while we are in the game
 		Games.Invitations.registerInvitationListener(getApiClient(), this);
-
+		setName();
 		// if we received an invite via notification, accept it; otherwise, go
 		// to main screen
 		if (getInvitationId() != null) {
@@ -134,30 +140,52 @@ public class MainActivity extends BaseGameActivity implements
 		switchToMainScreen();
 	}
 
+	private void setName() {
+		com.google.android.gms.games.Player player = Games.Players
+				.getCurrentPlayer(getApiClient());
+		name = player.getDisplayName();
+		SharedPreferences settings = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		Editor editor = settings.edit();
+		editor.putString("name", name);
+		editor.commit();
+	}
+
 	@Override
 	public void onClick(View v) {
 		Intent intent;
-
+		ArrayList<Player> players;
 		switch (v.getId()) {
 		case R.id.local:
+		case R.id.local_2:
 			// MessageDialog md = new MessageDialog(this, 0);
 			// md.show();
 			// intent = new Intent(this, GameSetupActivity.class);
 			// startActivity(intent);
 			// LogginUtil.logEvent(this, "User action", "Game selected",
 			// "Multiplayer local game", 0);
+			// players = new ArrayList<Player>();
+			// Player player1 = new Player("Player 1", FIRST_PLAYER_COLOUR);
+			// players.add(0, player1);
+			// Player player2 = new Player("Player 2", SECOND_PLAYER_COLOUR);
+			// players.add(player2);
+			// Theme theme = new Theme("");
+			// theme.setRow(7);
+			// theme.setCol(5);
+			// isOnline = false;
+			// startGame(theme, players, 0, false);
 			// break;
 		case R.id.button_single_player:
 		case R.id.button_single_player_2:
 			LogginUtil.logEvent(this, "User action", "Game selected",
 					"Single player game", 0);
-			ArrayList<Player> players = new ArrayList<Player>();
-			com.google.android.gms.games.Player player = Games.Players
-					.getCurrentPlayer(getApiClient());
-			Player gpPLayer = new Player(player.getDisplayName(),
-					FIRST_PLAYER_COLOUR);
+			players = new ArrayList<Player>();
+			Player gpPLayer = new Player(name, FIRST_PLAYER_COLOUR);
 			players.add(gpPLayer);
-			startGamePlay(null, players, 0, true);
+			Theme theme = new Theme("");
+			theme.setRow(7);
+			theme.setCol(5);
+			startGame(theme, players, 0, true);
 			break;
 
 		case R.id.button_sign_in:
@@ -211,9 +239,9 @@ public class MainActivity extends BaseGameActivity implements
 		rtmConfigBuilder.setAutoMatchCriteria(autoMatchCriteria);
 		switchToScreen(R.id.screen_wait);
 		keepScreenOn();
-		resetGameVars();
 		Games.RealTimeMultiplayer.create(getApiClient(),
 				rtmConfigBuilder.build());
+		quickGame = true;
 	}
 
 	@Override
@@ -238,7 +266,32 @@ public class MainActivity extends BaseGameActivity implements
 			if (responseCode == Activity.RESULT_OK) {
 				// ready to start playing
 				Log.d(TAG, "Starting game (waiting room returned OK).");
-				startGame(true);
+				mMultiplayer = true;
+				if (quickGame) {
+					int me = 0;
+					ArrayList<Player> players = new ArrayList<Player>();
+					int i = 0;
+					int[] colors = new int[] { FIRST_PLAYER_COLOUR,
+							SECOND_PLAYER_COLOUR };
+					for (Participant participant : mRoom.getParticipants()) {
+
+						Player player = new Player(
+								participant.getDisplayName(), colors[i]);
+						players.add(player);
+						if (participant.getParticipantId().equals(mMyId))
+							me = i;
+						i++;
+					}
+					Theme theme = new Theme("");
+					theme.setRow(7);
+					theme.setCol(5);
+					startGame(theme, players, me, false);
+				} else {
+					if (mCreatorId.equals(mMyId)) {
+						int me = 0;
+						startMultiplayerOnlineGame(null, me);
+					}
+				}
 			} else if (responseCode == GamesActivityResultCodes.RESULT_LEFT_ROOM) {
 				// player indicated that they want to leave the room
 				leaveRoom();
@@ -250,6 +303,7 @@ public class MainActivity extends BaseGameActivity implements
 				// something else (like minimizing the waiting room UI).
 				leaveRoom();
 			}
+
 			break;
 		case REQUEST_LEADERBOARD:
 			break;
@@ -296,7 +350,6 @@ public class MainActivity extends BaseGameActivity implements
 		}
 		switchToScreen(R.id.screen_wait);
 		keepScreenOn();
-		resetGameVars();
 		Games.RealTimeMultiplayer.create(getApiClient(),
 				rtmConfigBuilder.build());
 		Log.d(TAG, "Room created, waiting for it to be ready...");
@@ -330,7 +383,6 @@ public class MainActivity extends BaseGameActivity implements
 				.setRoomStatusUpdateListener(this);
 		switchToScreen(R.id.screen_wait);
 		keepScreenOn();
-		resetGameVars();
 		Games.RealTimeMultiplayer.join(getApiClient(),
 				roomConfigBuilder.build());
 	}
@@ -377,6 +429,7 @@ public class MainActivity extends BaseGameActivity implements
 	// Leave the room.
 	@Override
 	public void leaveRoom() {
+		quickGame = false;
 		Log.d(TAG, "Leaving room.");
 		mSecondsLeft = 0;
 		stopKeepingScreenOn();
@@ -385,8 +438,8 @@ public class MainActivity extends BaseGameActivity implements
 			mRoomId = null;
 			switchToScreen(R.id.screen_wait);
 		} else {
-			startActivityForResult(Games.Leaderboards.getLeaderboardIntent(
-					getApiClient(), LEADERBOARD_ID), REQUEST_LEADERBOARD);
+			// startActivityForResult(Games.Leaderboards.getLeaderboardIntent(
+			// getApiClient(), LEADERBOARD_ID), REQUEST_LEADERBOARD);
 			switchToMainScreen();
 		}
 	}
@@ -578,7 +631,6 @@ public class MainActivity extends BaseGameActivity implements
 			mParticipants = room.getParticipants();
 		}
 		if (mParticipants != null) {
-			updatePeerScoresDisplay();
 		}
 	}
 
@@ -592,63 +644,6 @@ public class MainActivity extends BaseGameActivity implements
 	int mScore = 0; // user's current score
 	private GameBoardFragment mFragment;
 
-	// Reset game variables in preparation for a new game.
-	void resetGameVars() {
-		mSecondsLeft = GAME_DURATION;
-		mScore = 0;
-		mParticipantScore.clear();
-		mFinishedParticipants.clear();
-	}
-
-	// Start the gameplay phase of the game.
-	void startGame(boolean multiplayer) {
-		mMultiplayer = multiplayer;
-		updateScoreDisplay();
-		broadcastScore(false);
-		// switchToScreen(R.id.screen_game);
-		ArrayList<Player> players = new ArrayList<Player>();
-		int me = 1;
-		if (mCreatorId.equals(mMyId)) {
-			me = 0;
-			startGamePlay(null, players, me, false);
-		}
-		// run the gameTick() method every second to update the game.
-		// final Handler h = new Handler();
-		// h.postDelayed(new Runnable() {
-		// @Override
-		// public void run() {
-		// if (mSecondsLeft <= 0)
-		// return;
-		// gameTick();
-		// h.postDelayed(this, 1000);
-		// }
-		// }, 1000);
-	}
-
-	// indicates the player scored one point
-	void scoreOnePoint() {
-		if (mSecondsLeft <= 0)
-			return; // too late!
-		++mScore;
-		updateScoreDisplay();
-		updatePeerScoresDisplay();
-
-		// broadcast our new score to our peers
-		broadcastScore(false);
-	}
-
-	/*
-	 * COMMUNICATIONS SECTION. Methods that implement the game's network
-	 * protocol.
-	 */
-
-	// Score of other participants. We update this as we receive their scores
-	// from the network.
-	Map<String, Integer> mParticipantScore = new HashMap<String, Integer>();
-
-	// Participants who sent us their final score.
-	Set<String> mFinishedParticipants = new HashSet<String>();
-
 	// Called when we receive a real-time message from the network.
 	// Messages in our game are made up of 2 bytes: the first one is 'F' or 'U'
 	// indicating
@@ -659,84 +654,57 @@ public class MainActivity extends BaseGameActivity implements
 	public void onRealTimeMessageReceived(RealTimeMessage rtm) {
 
 		byte[] buf = rtm.getMessageData();
-		String sender = rtm.getSenderParticipantId();
+		// String sender = rtm.getSenderParticipantId();
 		Theme theme = new Theme("");
 		String bMessage = new String(buf);
 		System.out.println();
 		String[] message = bMessage.split("::");
 		switch (Integer.parseInt(message[0])) {
 		case 0:
-			ArrayList<Player> players = new ArrayList<Player>();
-			if (message.length >= 5) {
-				theme.setup(message[1]);
-				theme.setRow(Integer.parseInt(message[2]));
-				theme.setCol(Integer.parseInt(message[3]));
-				theme.setId(Integer.parseInt(message[4]));
+			if (!quickGame) {
+				if (message.length >= 5) {
+					theme.setup(message[1]);
+					theme.setRow(Integer.parseInt(message[2]));
+					theme.setCol(Integer.parseInt(message[3]));
+					theme.setId(Integer.parseInt(message[4]));
+				}
+				int me = 1;
+				startMultiplayerOnlineGame(theme, me);
 			}
-			int me = 1;
-			boolean singlePlayer = false;
-			startGamePlay(theme.getBoard(), players, me, singlePlayer);
 			break;
-		case 1:
+		default:
 			Intent intent = new Intent();
 			intent.setAction(FindGameActivity.STR_MESSAGE_READ);
 			intent.putExtra("data", buf);
 			this.sendBroadcast(intent);
 			break;
-		default:
-			break;
 		}
-		// Log.d(TAG, "Message received: " + (char) buf[0] + "/" + (int)
-		// buf[1]);
-		//
-		// if (buf[0] == 'F' || buf[0] == 'U') {
-		// // score update.
-		// int existingScore = mParticipantScore.containsKey(sender) ?
-		// mParticipantScore
-		// .get(sender) : 0;
-		// int thisScore = (int) buf[1];
-		// if (thisScore > existingScore) {
-		// // this check is necessary because packets may arrive out of
-		// // order, so we
-		// // should only ever consider the highest score we received, as
-		// // we know in our
-		// // game there is no way to lose points. If there was a way to
-		// // lose points,
-		// // we'd have to add a "serial number" to the packet.
-		// mParticipantScore.put(sender, thisScore);
-		// }
-		//
-		// // update the scores on the screen
-		// updatePeerScoresDisplay();
-		//
-		// // if it's a final score, mark this participant as having finished
-		// // the game
-		// if ((char) buf[0] == 'F') {
-		// mFinishedParticipants.add(rtm.getSenderParticipantId());
-		// }
-		// }
 	}
 
-	private void startGamePlay(int[] board, ArrayList<Player> players, int me,
+	private void startMultiplayerOnlineGame(Theme board, int me) {
+		ArrayList<Player> players = new ArrayList<Player>();
+		for (Participant participant : mRoom.getParticipants()) {
+			if (participant.getParticipantId().equals(mCreatorId)) {
+				Player player = new Player(participant.getDisplayName(),
+						FIRST_PLAYER_COLOUR);
+				players.add(0, player);
+			} else {
+				Player player = new Player(participant.getDisplayName(),
+						SECOND_PLAYER_COLOUR);
+				players.add(player);
+			}
+		}
+		startGame(board, players, me, false);
+	}
+
+	private void startGame(Theme theme, ArrayList<Player> players, int me,
 			boolean singlePlayer) {
 		switchToScreen(R.id.screen_game);
-		if (!singlePlayer)
-			for (Participant participant : mRoom.getParticipants()) {
-
-				if (participant.getParticipantId().equals(mCreatorId)) {
-					Player player = new Player(participant.getDisplayName(),
-							FIRST_PLAYER_COLOUR);
-					players.add(0, player);
-				} else {
-					Player player = new Player(participant.getDisplayName(),
-							SECOND_PLAYER_COLOUR);
-					players.add(player);
-				}
-			}
 		mFragment = new GameBoardFragment(new Intent(), this, players, me,
-				this, board, singlePlayer);
+				this, theme, singlePlayer, isOnline, quickGame);
 		FragmentTransaction ft = getFragmentManager().beginTransaction();
 		ft.replace(R.id.screen_game, mFragment).commit();
+
 	}
 
 	// Broadcast my score to everybody else.
@@ -777,7 +745,7 @@ public class MainActivity extends BaseGameActivity implements
 			R.id.button_invite_players, R.id.button_quick_game,
 			R.id.button_see_invitations, R.id.button_sign_in,
 			R.id.button_sign_out, R.id.button_single_player,
-			R.id.button_single_player_2, R.id.local };
+			R.id.button_single_player_2, R.id.local, R.id.local_2 };
 
 	// This array lists all the individual screens our game has.
 	final static int[] SCREENS = { R.id.screen_game, R.id.screen_main,
@@ -809,51 +777,10 @@ public class MainActivity extends BaseGameActivity implements
 	}
 
 	void switchToMainScreen() {
+		if (mFragment != null)
+			mFragment.stopTimer();
 		switchToScreen(isSignedIn() ? R.id.screen_main : R.id.screen_sign_in);
 	}
-
-	// updates the label that shows my score
-	void updateScoreDisplay() {
-	}
-
-	// formats a score as a three-digit number
-	String formatScore(int i) {
-		if (i < 0)
-			i = 0;
-		String s = String.valueOf(i);
-		return s.length() == 1 ? "00" + s : s.length() == 2 ? "0" + s : s;
-	}
-
-	// updates the screen with the scores from our peers
-	void updatePeerScoresDisplay() {
-		// ((TextView) findViewById(R.id.score0)).setText(formatScore(mScore)
-		// + " - Me");
-		// int[] arr = { R.id.score1, R.id.score2, R.id.score3 };
-		// int i = 0;
-		//
-		// if (mRoomId != null) {
-		// for (Participant p : mParticipants) {
-		// String pid = p.getParticipantId();
-		// if (pid.equals(mMyId))
-		// continue;
-		// if (p.getStatus() != Participant.STATUS_JOINED)
-		// continue;
-		// int score = mParticipantScore.containsKey(pid) ? mParticipantScore
-		// .get(pid) : 0;
-		// ((TextView) findViewById(arr[i])).setText(formatScore(score)
-		// + " - " + p.getDisplayName());
-		// ++i;
-		// }
-		// }
-		//
-		// for (; i < arr.length; ++i) {
-		// ((TextView) findViewById(arr[i])).setText("");
-		// }
-	}
-
-	/*
-	 * MISC SECTION. Miscellaneous methods.
-	 */
 
 	/**
 	 * Checks that the developer (that's you!) read the instructions. IMPORTANT:
@@ -919,6 +846,8 @@ public class MainActivity extends BaseGameActivity implements
 
 	@Override
 	public void gameOver(int score) {
-		Games.Leaderboards.submitScore(getApiClient(), LEADERBOARD_ID, score);
+		if (isOnline)
+			Games.Leaderboards.submitScore(getApiClient(), LEADERBOARD_ID,
+					score);
 	}
 }

@@ -3,17 +3,14 @@ package com.vm.gameplay;
 import java.util.ArrayList;
 
 import android.annotation.SuppressLint;
-import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Typeface;
-import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -334,7 +331,8 @@ public class SurfaceViewActivity extends BaseActivity implements
 					boardDimensions.getHeight(), boardDimensions.getWidth(),
 					boardDimensions.getCellWidth());
 			if (!gameState.isBoardCreated())
-				gameState.getTheme().createBoard(gameState.getTotal());
+				gameState.createBoard();
+
 			gameBoard = new GameBoard(this, surface, gamePlay, gameState,
 					boardDimensions);
 			restart();

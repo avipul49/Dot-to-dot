@@ -70,7 +70,8 @@ public class Theme {
 		return panulty == position;
 	}
 
-	public void createBoard(int total) {
+	public void createBoard() {
+		int total = getTotal();
 		board = new int[total];
 		board[(int) (Math.random() * total)] = -1;
 		board[(int) (Math.random() * total)] = -1;
@@ -82,6 +83,33 @@ public class Theme {
 				board[num] = -2;
 			}
 		}
+
+		for (int i = 0; i < total; i++) {
+			if (board[i] != -1 && board[i] != -2) {
+				int num = 0;
+				do {
+					num = (int) (Math.random() * collectionRes.length);
+				} while (num == bonus || num == panulty);
+
+				board[i] = num;
+			} else {
+				if (board[i] == -1)
+					board[i] = bonus;
+				else
+					board[i] = panulty;
+			}
+		}
+	}
+
+	public void createQuickBoard() {
+		int total = getTotal();
+		board = new int[total];
+		board[4] = -1;
+		board[3] = -1;
+		board[9] = -1;
+		board[13] = -2;
+		board[17] = -2;
+		board[20] = -2;
 
 		for (int i = 0; i < total; i++) {
 			if (board[i] != -1 && board[i] != -2) {

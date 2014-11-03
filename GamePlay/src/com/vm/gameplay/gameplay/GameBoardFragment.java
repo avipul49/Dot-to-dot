@@ -41,6 +41,7 @@ import com.vm.gameplay.model.Computer;
 import com.vm.gameplay.model.GameState;
 import com.vm.gameplay.model.Line;
 import com.vm.gameplay.model.Player;
+import com.vm.gameplay.model.Theme;
 import com.vm.gameplay.service.BluetoothGameService;
 
 public class GameBoardFragment extends Fragment implements
@@ -74,19 +75,25 @@ public class GameBoardFragment extends Fragment implements
 	private ArrayList<Player> players;
 	private int me;
 	private GamePlayInterface gamePlayInterface;
-	private int[] board;
+	private Theme theme;
+	private MessageDialog gameOverDialog;
+	private boolean singlePlayer;
+	private boolean isOnline;
+	private boolean quickGame;
 
 	public GameBoardFragment(Intent intent, Context context,
 			ArrayList<Player> players, int me,
-			GamePlayInterface gamePlayInterface, int[] board,
-			boolean isSinglePlayer) {
+			GamePlayInterface gamePlayInterface, Theme theme,
+			boolean isSinglePlayer, boolean isOnline, boolean quickGame) {
 		this.context = context;
 		this.intent = intent;
 		this.me = me;
 		this.players = players;
 		this.gamePlayInterface = gamePlayInterface;
-		this.board = board;
+		this.theme = theme;
 		this.singlePlayer = isSinglePlayer;
+		this.isOnline = isOnline;
+		this.quickGame = quickGame;
 	}
 
 	@Override
@@ -99,10 +106,9 @@ public class GameBoardFragment extends Fragment implements
 
 	@SuppressLint("NewApi")
 	public void init() {
-		boolean bluetooth = true;
 		initUIElements();
-		initGameState(singlePlayer, bluetooth, me);
-		setupScoreTextViews(bluetooth);
+		initGameState(singlePlayer, isOnline, me);
+		setupScoreTextViews(isOnline);
 		holder = surface.getHolder();
 		holder.addCallback(this);
 		surface.setOnTouchListener(this);
@@ -174,18 +180,24 @@ public class GameBoardFragment extends Fragment implements
 		tvScore[index].setBackgroundColor(color);
 	}
 
-	private void initGameState(boolean singlePlayer, boolean bluetooth, int me) {
+	private void initGameState(boolean singlePlayer, boolean isOnline, int me) {
 		gameState = new GameState(
 				((GameApplication) context.getApplicationContext()).getThemes());
 		gameState.setThemeIndex(intent.getIntExtra("theme", 0));
-		gameState.configureTheme(intent.getIntExtra("row", 7),
-				intent.getIntExtra("col", 5), board);
-
+		gameState.configureTheme(theme);
 		gameState.setPlayers(players);
-		gameState.configurePlayers(singlePlayer, bluetooth);
+		gameState.configurePlayers(singlePlayer, isOnline);
 		gameState.setMe(me);
 		tvTurn.setText(String.format("%s's turn", gameState.getCurrentPlayer()
 				.getName()));
+		if (!gameState.isBoardCreated()) {
+			if (quickGame)
+				gameState.createQuickBoard();
+			else {
+				gameState.createBoard();
+				gamePlayInterface.sendMove(gameState.getStartGameMessage());
+			}
+		}
 	}
 
 	private void initUIElements() {
@@ -275,10 +287,6 @@ public class GameBoardFragment extends Fragment implements
 			gameState.getTheme().createDrawables(getResources(),
 					boardDimensions.getHeight(), boardDimensions.getWidth(),
 					boardDimensions.getCellWidth());
-			if (!gameState.isBoardCreated()) {
-				gameState.createBoard();
-				gamePlayInterface.sendMove(gameState.getStartGameMessage());
-			}
 			gameBoard = new GameBoard(context, surface, gamePlay, gameState,
 					boardDimensions);
 			restart();
@@ -443,7 +451,6 @@ public class GameBoardFragment extends Fragment implements
 			super(timeRemaining2, 1000);
 			tvTimer.setTextColor(Color.BLACK);
 			tvTimer.setTypeface(Typeface.DEFAULT);
-
 		}
 
 		public void onTick(long millisUntilFinished) {
@@ -535,7 +542,9 @@ public class GameBoardFragment extends Fragment implements
 		}
 
 	};
-	private MessageDialog gameOverDialog;
-	private boolean singlePlayer;
 
+	public void stopTimer() {
+		if (countDownTimer != null)
+			countDownTimer.cancel();
+	}
 }

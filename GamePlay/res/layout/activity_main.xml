@@ -27,18 +27,25 @@
         android:id="@+id/screen_sign_in"
         style="@style/LLScreen" >
 
-        <TextView style="@style/GameTitle" />
-
-        <TextView style="@style/GameBlurb" />
+        <com.google.android.gms.common.SignInButton
+            android:id="@+id/button_sign_in"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp" />
 
         <Button
             android:id="@+id/button_single_player"
-            style="@style/MainScreenButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
             android:text="@string/single_player" />
 
-        <com.google.android.gms.common.SignInButton
-            android:id="@+id/button_sign_in"
-            style="@style/SignInButton" />
+        <Button
+            android:id="@+id/local"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:text="Multi player game" />
     </LinearLayout>
 
     <!-- MAIN SCREEN -->
@@ -55,7 +62,7 @@
             android:text="@string/single_player" />
 
         <Button
-            android:id="@+id/local"
+            android:id="@+id/local_2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
