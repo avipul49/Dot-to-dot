@@ -30,9 +30,9 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.vm.gameplay.FindGameActivity;
 import com.vm.gameplay.GameApplication;
 import com.vm.gameplay.GamePlayInterface;
+import com.vm.gameplay.MainActivity;
 import com.vm.gameplay.R;
 import com.vm.gameplay.dialog.DialogCallback;
 import com.vm.gameplay.dialog.MessageDialog;
@@ -42,8 +42,9 @@ import com.vm.gameplay.model.GameState;
 import com.vm.gameplay.model.Line;
 import com.vm.gameplay.model.Player;
 import com.vm.gameplay.model.Theme;
-import com.vm.gameplay.service.BluetoothGameService;
+import com.vm.gameplay.service.MyService;
 
+@SuppressLint("ClickableViewAccessibility")
 public class GameBoardFragment extends Fragment implements
 		SurfaceHolder.Callback, DialogCallback, OnTouchListener,
 		OnScoreListener {
@@ -54,9 +55,6 @@ public class GameBoardFragment extends Fragment implements
 	private TextView tvScore[] = new TextView[2];
 	private TextView tvTurn;
 	private TextView tvTimer;
-	// private BluetoothGameService mGameService;
-	private boolean restart = false;
-	private boolean finish = false;
 	private GameState gameState;
 	private GamePlay gamePlay;
 	private int score[] = new int[2];
@@ -80,6 +78,7 @@ public class GameBoardFragment extends Fragment implements
 	private boolean singlePlayer;
 	private boolean isOnline;
 	private boolean quickGame;
+	TimerReceiver timerReceiver;
 
 	public GameBoardFragment(Intent intent, Context context,
 			ArrayList<Player> players, int me,
@@ -101,6 +100,14 @@ public class GameBoardFragment extends Fragment implements
 			Bundle savedInstanceState) {
 		view = inflater.inflate(R.layout.game_play_view, container, false);
 		init();
+		IntentFilter filter = new IntentFilter();
+		filter.addAction(MyService.TICK);
+		filter.addAction(MyService.TIMEOUT);
+		filter.addAction(MyService.LAST_TIMEOUT);
+		if (timerReceiver == null) {
+			timerReceiver = new TimerReceiver();
+			context.registerReceiver(timerReceiver, filter);
+		}
 		return view;
 	}
 
@@ -127,10 +134,10 @@ public class GameBoardFragment extends Fragment implements
 	}
 
 	private void resetTimer(long timeRemaining2) {
-		if (countDownTimer != null)
-			countDownTimer.cancel();
-		countDownTimer = new PlayerTimer(timeRemaining2);
-		countDownTimer.start();
+		Intent intent = new Intent();
+		intent.setAction(MyService.START);
+		getActivity().sendBroadcast(intent);
+		tvTimer.setTextColor(Color.BLACK);
 	}
 
 	@Override
@@ -217,21 +224,21 @@ public class GameBoardFragment extends Fragment implements
 	public void onResume() {
 		super.onResume();
 		IntentFilter intentFilter = new IntentFilter();
-		intentFilter.addAction(FindGameActivity.STR_MESSAGE_DEVICE_NAME);
-		intentFilter.addAction(FindGameActivity.STR_MESSAGE_READ);
-		intentFilter.addAction(FindGameActivity.STR_MESSAGE_STATE_CHANGE);
-		intentFilter.addAction(FindGameActivity.STR_MESSAGE_WRITE);
+		intentFilter.addAction(MainActivity.STR_MESSAGE_READ);
 		context.registerReceiver(receiver, intentFilter);
-		if (timeRemaining != -1)
-			resetTimer(timeRemaining);
+		// if (timeRemaining != -1)
+		// resetTimer(timeRemaining);
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
-		context.unregisterReceiver(receiver);
 		if (countDownTimer != null)
 			countDownTimer.cancel();
+	}
+
+	public void onLeave() {
+		context.unregisterReceiver(receiver);
 	}
 
 	private void move(Line line) {
@@ -252,12 +259,14 @@ public class GameBoardFragment extends Fragment implements
 		new Handler().postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				if (gameState.isComputersTern()) {
-					Line computerLine = ((Computer) gameState.getPlayers().get(
-							1)).getNextMove();
-					// Log.i("Computer: ", "s: " + computerLine.getStart()
-					// + "  e: " + computerLine.getEnd());
-					move(computerLine);
+				if (GameBoardFragment.this.isVisible()) {
+					if (gameState.isComputersTern()) {
+						Line computerLine = ((Computer) gameState.getPlayers()
+								.get(1)).getNextMove();
+						// Log.i("Computer: ", "s: " + computerLine.getStart()
+						// + "  e: " + computerLine.getEnd());
+						move(computerLine);
+					}
 				}
 			}
 		}, 1000);
@@ -304,11 +313,6 @@ public class GameBoardFragment extends Fragment implements
 						/ (gameState.getTheme().getRow() + 1)));
 		boardDimensions.setxOffset(gameState.getTheme().getRow() + 1);
 		boardDimensions.setyOffset(gameState.getTheme().getCol() + 1);
-
-		// boardDimensions.setHeight((gameState.getTheme().getRow() + 1)
-		// * boardDimensions.getCellWidth());
-		// boardDimensions.setWidth((gameState.getTheme().getCol() + 1)
-		// * boardDimensions.getCellWidth());
 		gamePlay = new GamePlay(boardDimensions, gameState, this);
 	}
 
@@ -317,6 +321,7 @@ public class GameBoardFragment extends Fragment implements
 	}
 
 	public void restart() {
+
 		if (gameOverDialog != null && gameOverDialog.isShowing()) {
 			gameOverDialog.dismiss();
 		}
@@ -418,6 +423,8 @@ public class GameBoardFragment extends Fragment implements
 	}
 
 	private void displayGameOverMessage(boolean timeout) {
+		if (gameOverDialog != null && gameOverDialog.isShowing())
+			gameOverDialog.dismiss();
 		gameOverDialog = new MessageDialog(context, 1);
 		gameOverDialog.setCallback(this);
 		gameOverDialog.setScores(timeout, gameState.getPlayer(), gameState
@@ -446,99 +453,58 @@ public class GameBoardFragment extends Fragment implements
 		super.onDestroy();
 	}
 
-	private class PlayerTimer extends CountDownTimer {
-		public PlayerTimer(long timeRemaining2) {
-			super(timeRemaining2, 1000);
-			tvTimer.setTextColor(Color.BLACK);
-			tvTimer.setTypeface(Typeface.DEFAULT);
-		}
+	public void onTick(long millisUntilFinished) {
 
-		public void onTick(long millisUntilFinished) {
-			timeRemaining = millisUntilFinished;
-			long sec = (long) Math.floor(millisUntilFinished / 1000);
-			tvTimer.setText(String.format("%02d:%02d", sec / 60, sec % 60));
-			if (millisUntilFinished < 10500) {
-				AnimationSet animationSet = getAnimationSet(100);
-				tvTimer.startAnimation(animationSet);
-				tvTimer.setTextColor(Color.RED);
-				tvTimer.setTypeface(Typeface.DEFAULT_BOLD);
-				if (millisUntilFinished > 9500) {
-					startScoreAnimation(view
-							.findViewById(R.id.notificationImage));
-				}
+		long sec = (long) Math.floor(millisUntilFinished / 1000);
+		// Log.i("", "------" + sec);
+		tvTimer.setText(String.format("%02d:%02d", sec / 60, sec % 60));
+		if (millisUntilFinished < 10500) {
+			AnimationSet animationSet = getAnimationSet(100);
+			tvTimer.startAnimation(animationSet);
+			tvTimer.setTextColor(Color.RED);
+			tvTimer.setTypeface(Typeface.DEFAULT_BOLD);
+			if (millisUntilFinished > 9500) {
+				startScoreAnimation(view.findViewById(R.id.notificationImage));
 			}
 		}
-
-		public void onFinish() {
-			timerCounter++;
-			tvTimer.setText("00:00");
-			gamePlay.timePenalty(-5);
-			if (timerCounter == 3)
-				displayGameOverMessage(true);
-			else
-				resetTimer(totalTimerTime);
-		}
-	};
+	}
 
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
 		@SuppressLint("NewApi")
 		public void onReceive(android.content.Context context, Intent intent) {
-			String action = intent.getAction();
-			switch (Integer.parseInt(action)) {
-			case FindGameActivity.MESSAGE_STATE_CHANGE:
+			byte[] readBuf = (byte[]) intent.getByteArrayExtra("data");
+			String readMessage = new String(readBuf);
+			String[] message = readMessage.split("::");
+			switch (Integer.parseInt(message[0])) {
+			case 0:
 
-				switch (intent.getIntExtra("state",
-						BluetoothGameService.STATE_NONE)) {
-				case BluetoothGameService.STATE_CONNECTED:
-					break;
-				case BluetoothGameService.STATE_CONNECTING:
-					break;
-				case BluetoothGameService.STATE_LISTEN:
-				case BluetoothGameService.STATE_NONE:
-					// finish();
-					break;
-				}
 				break;
-			case FindGameActivity.MESSAGE_WRITE:
+			case 1:
+				Point start = new Point(Integer.parseInt(message[1])
+						* boardDimensions.getCellWidth()
+						+ boardDimensions.getxOffset(),
+						Integer.parseInt(message[2])
+								* boardDimensions.getCellWidth()
+								+ boardDimensions.getyOffset());
+				Point end = new Point(Integer.parseInt(message[3])
+						* boardDimensions.getCellWidth()
+						+ boardDimensions.getxOffset(),
+						Integer.parseInt(message[4])
+								* boardDimensions.getCellWidth()
+								+ boardDimensions.getyOffset());
+				Line line = new Line(start, end);
+				move(line);
 				break;
-			case FindGameActivity.MESSAGE_READ:
-				byte[] readBuf = (byte[]) intent.getByteArrayExtra("data");
-				String readMessage = new String(readBuf);
-				String[] message = readMessage.split("::");
-				switch (Integer.parseInt(message[0])) {
-				case 0:
-
-					break;
-				case 1:
-					Point start = new Point(Integer.parseInt(message[1])
-							* boardDimensions.getCellWidth()
-							+ boardDimensions.getxOffset(),
-							Integer.parseInt(message[2])
-									* boardDimensions.getCellWidth()
-									+ boardDimensions.getyOffset());
-					Point end = new Point(Integer.parseInt(message[3])
-							* boardDimensions.getCellWidth()
-							+ boardDimensions.getxOffset(),
-							Integer.parseInt(message[4])
-									* boardDimensions.getCellWidth()
-									+ boardDimensions.getyOffset());
-					Line line = new Line(start, end);
-					move(line);
-					break;
-				case 2:
-					undo();
-					break;
-				case 3:
-					restart();
-					break;
-				default:
-					break;
-				}
+			case 2:
+				undo();
 				break;
-			case FindGameActivity.MESSAGE_DEVICE_NAME:
+			case 3:
+				restart();
 				break;
-
+			default:
+				break;
 			}
+
 		}
 
 	};
@@ -546,5 +512,32 @@ public class GameBoardFragment extends Fragment implements
 	public void stopTimer() {
 		if (countDownTimer != null)
 			countDownTimer.cancel();
+	}
+
+	class TimerReceiver extends BroadcastReceiver {
+
+		private Toast makeText;
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			String action = intent.getAction();
+
+			if (action.equals(MyService.LAST_TIMEOUT)) {
+				gamePlayInterface.leaveRoom();
+				Intent intent1 = new Intent();
+				intent1.setAction(MyService.LAST_TIMEOUT);
+				context.removeStickyBroadcast(intent1);
+				displayGameOverMessage(true);
+				context.unregisterReceiver(timerReceiver);
+			} else if (action.equals(MyService.TICK)) {
+				onTick(intent.getLongExtra("millisUntilFinished", 0));
+			} else if (action.equals(MyService.TIMEOUT)) {
+				timerCounter++;
+				tvTimer.setText("00:00");
+				tvTimer.setTextColor(Color.BLACK);
+				gamePlay.timePenalty(-5);
+			}
+		}
+
 	}
 }

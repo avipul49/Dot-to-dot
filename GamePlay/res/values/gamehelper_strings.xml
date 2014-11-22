@@ -26,7 +26,8 @@
     <string name="dismiss">Dismiss</string>
     <string name="your_score">Your score:</string>
     <string name="error">Error</string>
-    <string name="game_problem">An error occurred while starting the game. Please try again.</string>
+    <string name="game_problem">Your opponent has left the room.</string>
+    <string name="opponent_left">Your opponent has left the room.</string>
     <string name="click_me">Click me!</string>
     <string name="is_inviting_you">is challenging you to a game!</string>
 

@@ -104,18 +104,19 @@ public abstract class BaseGameActivity extends FragmentActivity implements
             getGameHelper();
         }
         mHelper.setup(this);
+        mHelper.onStart(this);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        mHelper.onStart(this);
+      //  mHelper.onStart(this);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        mHelper.onStop();
+        //mHelper.onStop();
     }
 
     @Override

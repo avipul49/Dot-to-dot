@@ -11,6 +11,7 @@ import android.content.SharedPreferences.Editor;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -18,6 +19,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.games.Games;
 import com.google.android.gms.games.GamesActivityResultCodes;
@@ -37,6 +39,7 @@ import com.vm.gameplay.gameplay.GameBoardFragment;
 import com.vm.gameplay.logging.LogginUtil;
 import com.vm.gameplay.model.Player;
 import com.vm.gameplay.model.Theme;
+import com.vm.gameplay.service.MyService;
 
 public class MainActivity extends BaseGameActivity implements
 		View.OnClickListener, RealTimeMessageReceivedListener,
@@ -46,15 +49,12 @@ public class MainActivity extends BaseGameActivity implements
 	private static final String LEADERBOARD_ID = "CgkI1permasHEAIQCQ";
 
 	private static final int SECOND_PLAYER_COLOUR = Color.parseColor("#FEE401");
+	public static final String STR_MESSAGE_READ = "2";
 
 	private static final int FIRST_PLAYER_COLOUR = Color.parseColor("#AFE90C");
 	private String name = "Player 1";
 	private boolean isOnline;
 	private boolean quickGame;
-	/*
-	 * API INTEGRATION SECTION. This section contains the code that integrates
-	 * the game with the Google Play game services API.
-	 */
 
 	// Debug tag
 	final static boolean ENABLE_DEBUG = true;
@@ -89,9 +89,11 @@ public class MainActivity extends BaseGameActivity implements
 	private Room mRoom;
 	private String mCreatorId;
 
+	private boolean leaveGame;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		enableDebugLog(ENABLE_DEBUG, TAG);
+		// enableDebugLog(ENABLE_DEBUG, TAG);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		super.onCreate(savedInstanceState);
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -101,6 +103,8 @@ public class MainActivity extends BaseGameActivity implements
 		for (int id : CLICKABLES) {
 			findViewById(id).setOnClickListener(this);
 		}
+		switchToMainScreen();
+		startService(new Intent(this, MyService.class));
 	}
 
 	/**
@@ -289,7 +293,10 @@ public class MainActivity extends BaseGameActivity implements
 				} else {
 					if (mCreatorId.equals(mMyId)) {
 						int me = 0;
-						startMultiplayerOnlineGame(null, me);
+						Theme theme = new Theme("");
+						theme.setRow(7);
+						theme.setCol(5);
+						startMultiplayerOnlineGame(theme, me);
 					}
 				}
 			} else if (responseCode == GamesActivityResultCodes.RESULT_LEFT_ROOM) {
@@ -393,12 +400,12 @@ public class MainActivity extends BaseGameActivity implements
 		Log.d(TAG, "**** got onStop");
 
 		// if we're in a room, leave it.
-		leaveRoom();
+		// leaveRoom();
 
 		// stop trying to keep the screen on
-		stopKeepingScreenOn();
+		// stopKeepingScreenOn();
 
-		switchToScreen(R.id.screen_wait);
+		// switchToScreen(R.id.screen_wait);
 		super.onStop();
 	}
 
@@ -411,8 +418,14 @@ public class MainActivity extends BaseGameActivity implements
 	// this flow simply succeeds and is imperceptible).
 	@Override
 	public void onStart() {
-		switchToScreen(R.id.screen_wait);
+		// switchToScreen(R.id.screen_wait);
 		super.onStart();
+	}
+
+	@Override
+	protected void onDestroy() {
+		// TODO Auto-generated method stub
+		super.onDestroy();
 	}
 
 	// Handle back key to make sure we cleanly leave a game if we are in the
@@ -420,8 +433,30 @@ public class MainActivity extends BaseGameActivity implements
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent e) {
 		if (keyCode == KeyEvent.KEYCODE_BACK && mCurScreen == R.id.screen_game) {
-			leaveRoom();
-			return true;
+			if (leaveGame) {
+				if (mFragment != null) {
+					mFragment.onLeave();
+					FragmentTransaction ft = getFragmentManager()
+							.beginTransaction();
+					ft.remove(mFragment).commit();
+					mFragment = null;
+				}
+				leaveRoom();
+				return true;
+			} else {
+				if (toast == null)
+					toast = Toast.makeText(MainActivity.this, "Press back again to leave the game.",
+							Toast.LENGTH_SHORT);
+				toast.show();
+				leaveGame = true;
+				new Handler().postDelayed(new Runnable() {
+					@Override
+					public void run() {
+						leaveGame = false;
+					}
+				}, 2000);
+				return false;
+			}
 		}
 		return super.onKeyDown(keyCode, e);
 	}
@@ -432,6 +467,9 @@ public class MainActivity extends BaseGameActivity implements
 		quickGame = false;
 		Log.d(TAG, "Leaving room.");
 		mSecondsLeft = 0;
+		Intent intent = new Intent();
+		intent.setAction(MyService.STOP);
+		sendBroadcast(intent);
 		stopKeepingScreenOn();
 		if (mRoomId != null) {
 			Games.RealTimeMultiplayer.leave(getApiClient(), this, mRoomId);
@@ -674,7 +712,7 @@ public class MainActivity extends BaseGameActivity implements
 			break;
 		default:
 			Intent intent = new Intent();
-			intent.setAction(FindGameActivity.STR_MESSAGE_READ);
+			intent.setAction(STR_MESSAGE_READ);
 			intent.putExtra("data", buf);
 			this.sendBroadcast(intent);
 			break;
@@ -700,9 +738,12 @@ public class MainActivity extends BaseGameActivity implements
 	private void startGame(Theme theme, ArrayList<Player> players, int me,
 			boolean singlePlayer) {
 		switchToScreen(R.id.screen_game);
+		FragmentTransaction ft = getFragmentManager().beginTransaction();
+		if (mFragment != null)
+			ft.remove(mFragment);
+
 		mFragment = new GameBoardFragment(new Intent(), this, players, me,
 				this, theme, singlePlayer, isOnline, quickGame);
-		FragmentTransaction ft = getFragmentManager().beginTransaction();
 		ft.replace(R.id.screen_game, mFragment).commit();
 
 	}
@@ -751,6 +792,8 @@ public class MainActivity extends BaseGameActivity implements
 	final static int[] SCREENS = { R.id.screen_game, R.id.screen_main,
 			R.id.screen_sign_in, R.id.screen_wait };
 	int mCurScreen = -1;
+
+	private Toast toast;
 
 	void switchToScreen(int screenId) {
 		// make the requested screen visible; hide all others.
@@ -850,4 +893,5 @@ public class MainActivity extends BaseGameActivity implements
 			Games.Leaderboards.submitScore(getApiClient(), LEADERBOARD_ID,
 					score);
 	}
+
 }
