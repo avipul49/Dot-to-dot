@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.vm.gameplay"
-    android:versionCode="6"
-    android:versionName="1.2" >
+    android:versionCode="7"
+    android:versionName="2.0" >
 
     <uses-sdk
-        android:minSdkVersion="13"
+        android:minSdkVersion="14"
         android:targetSdkVersion="17" />
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -13,7 +13,7 @@
     <uses-permission android:name="android.permission.BROADCAST_STICKY" />
 
     <application
-        android:name=".GameApplication"
+        android:name="com.vm.gameplay.GameApplication"
         android:allowBackup="true"
         android:icon="@drawable/new_icon"
         android:label="@string/app_name" >
@@ -25,15 +25,15 @@
             android:value="@integer/google_play_services_version" />
 
         <activity
-            android:name=".MainMenuActivity"
+            android:name="com.vm.gameplay.MainMenuActivity"
             android:theme="@style/AppTheme" >
         </activity>
         <activity
-            android:name=".BaseActivity"
+            android:name="com.vm.gameplay.BaseActivity"
             android:theme="@style/AppTheme" >
         </activity>
         <activity
-            android:name=".MainActivity"
+            android:name="com.vm.gameplay.MainActivity"
             android:theme="@style/AppTheme" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -12,7 +12,7 @@ import android.util.Log;
 public class MyService extends Service {
 	private CountDownTimer countDownTimer;
 	private int timerCounter;
-	private int totalTimerTime = 15000;
+	private int totalTimerTime = 30000;
 	public static final String LAST_TIMEOUT = "last_timeout";
 	public static final String TIMEOUT = "timeout";
 	public static final String TICK = "tick";
@@ -92,8 +92,8 @@ public class MyService extends Service {
 				if (countDownTimer != null)
 					countDownTimer.cancel();
 			} else if (action.equals(START)) {
-				resetTimer(totalTimerTime);
 				timerCounter = 0;
+				resetTimer(totalTimerTime);
 			}
 		}
 	}

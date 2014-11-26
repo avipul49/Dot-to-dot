@@ -8,7 +8,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.view.View;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.vm.gameplay.R;
@@ -28,7 +27,6 @@ public class MessageDialog extends Dialog implements
 	private TextView tvPlayer1Score;
 	private TextView tvPlayer2Score;
 	private TextView tvResult;
-	private LinearLayout llPlayer1, llPlayer2;
 
 	private DialogCallback callback;
 
@@ -52,8 +50,6 @@ public class MessageDialog extends Dialog implements
 		tvPlayer2Collections = (TextView) findViewById(R.id.player_2_collection);
 		tvPlayer1Score = (TextView) findViewById(R.id.player_1_score);
 		tvPlayer2Score = (TextView) findViewById(R.id.player_2_score);
-		llPlayer1 = (LinearLayout) findViewById(R.id.player_1_row);
-		llPlayer2 = (LinearLayout) findViewById(R.id.player_2_row);
 		tvResult = (TextView) findViewById(R.id.result);
 		findViewById(R.id.leave).setOnClickListener(this);
 		findViewById(R.id.restart).setOnClickListener(this);

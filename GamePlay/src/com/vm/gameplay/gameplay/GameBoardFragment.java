@@ -61,9 +61,6 @@ public class GameBoardFragment extends Fragment implements
 	private TextView tvLeftScore;
 	private TextView tvRightScore;
 	private CountDownTimer countDownTimer;
-	private int timerCounter;
-	private int totalTimerTime = 30000;
-	private long timeRemaining = -1;
 	private Toast notMyTurnToast;
 	private TextView notification;
 	private GameBoard gameBoard;
@@ -79,6 +76,7 @@ public class GameBoardFragment extends Fragment implements
 	private boolean isOnline;
 	private boolean quickGame;
 	TimerReceiver timerReceiver;
+	private boolean leftTheGame = false;
 
 	public GameBoardFragment(Intent intent, Context context,
 			ArrayList<Player> players, int me,
@@ -133,7 +131,7 @@ public class GameBoardFragment extends Fragment implements
 		setupPlayerTextViews(1, color, name);
 	}
 
-	private void resetTimer(long timeRemaining2) {
+	private void resetTimer() {
 		Intent intent = new Intent();
 		intent.setAction(MyService.START);
 		getActivity().sendBroadcast(intent);
@@ -171,7 +169,6 @@ public class GameBoardFragment extends Fragment implements
 						+ (line.getEnd().y - boardDimensions.getyOffset())
 						/ boardDimensions.getCellWidth();
 				gamePlayInterface.sendMove(out);
-				// mGameService.write(out.getBytes());
 			}
 		}
 		return false;
@@ -238,15 +235,18 @@ public class GameBoardFragment extends Fragment implements
 	}
 
 	public void onLeave() {
+		Intent intent1 = new Intent();
+		intent1.setAction(MyService.LAST_TIMEOUT);
+		context.removeStickyBroadcast(intent1);
 		context.unregisterReceiver(receiver);
+		leftTheGame = true;
 	}
 
 	private void move(Line line) {
 		if (line != null) {
-			timerCounter = 0;
-			resetTimer(totalTimerTime);
 			gameBoard.setLastMoveColor(gameState.getCurrentPlayer().getColor());
 			if (gameBoard.isValidMove(line)) {
+				resetTimer();
 				if (gamePlay.drawLine(line))
 					changePlayer();
 				gameBoard.drawBoard();
@@ -263,8 +263,6 @@ public class GameBoardFragment extends Fragment implements
 					if (gameState.isComputersTern()) {
 						Line computerLine = ((Computer) gameState.getPlayers()
 								.get(1)).getNextMove();
-						// Log.i("Computer: ", "s: " + computerLine.getStart()
-						// + "  e: " + computerLine.getEnd());
 						move(computerLine);
 					}
 				}
@@ -325,17 +323,14 @@ public class GameBoardFragment extends Fragment implements
 		if (gameOverDialog != null && gameOverDialog.isShowing()) {
 			gameOverDialog.dismiss();
 		}
-		timerCounter = 0;
 		if (gameState.isSinglePlayer())
 			((Computer) gameState.getPlayers().get(1))
 					.setupMoves(boardDimensions);
 		gamePlay.clear();
-		// tvPlayer[0].setText(gameState.getPlayer(0).getName());
 		tvScore[0].setText("00");
 		if (gameState.isStart()) {
-			// tvPlayer[1].setText(gameState.getPlayer(1).getName());
 			tvScore[1].setText("00");
-			resetTimer(totalTimerTime);
+			resetTimer();
 		}
 		gameState.setPlayer(0);
 		gameBoard.drawBoard();
@@ -516,26 +511,23 @@ public class GameBoardFragment extends Fragment implements
 
 	class TimerReceiver extends BroadcastReceiver {
 
-		private Toast makeText;
-
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			String action = intent.getAction();
-
-			if (action.equals(MyService.LAST_TIMEOUT)) {
-				gamePlayInterface.leaveRoom();
-				Intent intent1 = new Intent();
-				intent1.setAction(MyService.LAST_TIMEOUT);
-				context.removeStickyBroadcast(intent1);
-				displayGameOverMessage(true);
-				context.unregisterReceiver(timerReceiver);
-			} else if (action.equals(MyService.TICK)) {
-				onTick(intent.getLongExtra("millisUntilFinished", 0));
-			} else if (action.equals(MyService.TIMEOUT)) {
-				timerCounter++;
-				tvTimer.setText("00:00");
-				tvTimer.setTextColor(Color.BLACK);
-				gamePlay.timePenalty(-5);
+			if (!leftTheGame) {
+				String action = intent.getAction();
+				if (action.equals(MyService.LAST_TIMEOUT)) {
+					Intent intent1 = new Intent();
+					intent1.setAction(MyService.LAST_TIMEOUT);
+					context.removeStickyBroadcast(intent1);
+					displayGameOverMessage(true);
+					context.unregisterReceiver(timerReceiver);
+				} else if (action.equals(MyService.TICK)) {
+					onTick(intent.getLongExtra("millisUntilFinished", 0));
+				} else if (action.equals(MyService.TIMEOUT)) {
+					tvTimer.setText("00:00");
+					tvTimer.setTextColor(Color.BLACK);
+					gamePlay.timePenalty(-5);
+				}
 			}
 		}
 

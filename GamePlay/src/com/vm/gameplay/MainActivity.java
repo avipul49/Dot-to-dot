@@ -128,6 +128,7 @@ public class MainActivity extends BaseGameActivity implements
 	@Override
 	public void onSignInSucceeded() {
 		Log.d(TAG, "Sign-in succeeded.");
+
 		isOnline = true;
 
 		// register listener so we are notified if we receive an invitation to
@@ -148,6 +149,7 @@ public class MainActivity extends BaseGameActivity implements
 		com.google.android.gms.games.Player player = Games.Players
 				.getCurrentPlayer(getApiClient());
 		name = player.getDisplayName();
+		LogginUtil.logEvent(this, "Signed In", name, null, 0);
 		SharedPreferences settings = PreferenceManager
 				.getDefaultSharedPreferences(this);
 		Editor editor = settings.edit();
@@ -159,6 +161,7 @@ public class MainActivity extends BaseGameActivity implements
 	public void onClick(View v) {
 		Intent intent;
 		ArrayList<Player> players;
+		Theme theme = new Theme("");
 		switch (v.getId()) {
 		case R.id.local:
 		case R.id.local_2:
@@ -166,27 +169,25 @@ public class MainActivity extends BaseGameActivity implements
 			// md.show();
 			// intent = new Intent(this, GameSetupActivity.class);
 			// startActivity(intent);
-			// LogginUtil.logEvent(this, "User action", "Game selected",
-			// "Multiplayer local game", 0);
-			// players = new ArrayList<Player>();
-			// Player player1 = new Player("Player 1", FIRST_PLAYER_COLOUR);
-			// players.add(0, player1);
-			// Player player2 = new Player("Player 2", SECOND_PLAYER_COLOUR);
-			// players.add(player2);
-			// Theme theme = new Theme("");
-			// theme.setRow(7);
-			// theme.setCol(5);
-			// isOnline = false;
-			// startGame(theme, players, 0, false);
-			// break;
+			LogginUtil.logEvent(this, "Started selcted", "Multi-player local",
+					name, 0);
+			players = new ArrayList<Player>();
+			Player player1 = new Player("Player 1", FIRST_PLAYER_COLOUR);
+			players.add(0, player1);
+			Player player2 = new Player("Player 2", SECOND_PLAYER_COLOUR);
+			players.add(player2);
+			theme.setRow(7);
+			theme.setCol(5);
+			isOnline = false;
+			startGame(theme, players, 0, false);
+			break;
 		case R.id.button_single_player:
 		case R.id.button_single_player_2:
-			LogginUtil.logEvent(this, "User action", "Game selected",
-					"Single player game", 0);
+			LogginUtil.logEvent(this, "Started selcted", "Single player", name,
+					0);
 			players = new ArrayList<Player>();
 			Player gpPLayer = new Player(name, FIRST_PLAYER_COLOUR);
 			players.add(gpPLayer);
-			Theme theme = new Theme("");
 			theme.setRow(7);
 			theme.setCol(5);
 			startGame(theme, players, 0, true);
@@ -202,11 +203,14 @@ public class MainActivity extends BaseGameActivity implements
 			break;
 		case R.id.button_sign_out:
 			// user wants to sign out
+			LogginUtil.logEvent(this, "Sign out", name, null, 0);
 			signOut();
 			switchToScreen(R.id.screen_sign_in);
 			break;
 		case R.id.button_invite_players:
 			// show list of invitable players
+			LogginUtil.logEvent(this, "Multi-player online", "Invite player",
+					name, 0);
 			intent = Games.RealTimeMultiplayer.getSelectOpponentsIntent(
 					getApiClient(), 1, 1);
 			switchToScreen(R.id.screen_wait);
@@ -217,15 +221,20 @@ public class MainActivity extends BaseGameActivity implements
 			intent = Games.Invitations.getInvitationInboxIntent(getApiClient());
 			switchToScreen(R.id.screen_wait);
 			startActivityForResult(intent, RC_INVITATION_INBOX);
+			LogginUtil.logEvent(this, "Multi-player online", "See invitations",
+					name, 0);
 			break;
 		case R.id.button_accept_popup_invitation:
 			// user wants to accept the invitation shown on the invitation popup
 			// (the one we got through the OnInvitationReceivedListener).
 			acceptInviteToRoom(mIncomingInvitationId);
 			mIncomingInvitationId = null;
+			LogginUtil.logEvent(this, "Multi-player online",
+					"Accept invitation", name, 0);
 			break;
 		case R.id.button_quick_game:
 			// user wants to play against a random opponent right now
+			LogginUtil.logEvent(this, "Game selected", "Quick game", name, 0);
 			startQuickGame();
 			break;
 
@@ -246,6 +255,7 @@ public class MainActivity extends BaseGameActivity implements
 		Games.RealTimeMultiplayer.create(getApiClient(),
 				rtmConfigBuilder.build());
 		quickGame = true;
+
 	}
 
 	@Override
@@ -272,6 +282,8 @@ public class MainActivity extends BaseGameActivity implements
 				Log.d(TAG, "Starting game (waiting room returned OK).");
 				mMultiplayer = true;
 				if (quickGame) {
+					LogginUtil.logEvent(this, "Game started", "Quick game",
+							name, 0);
 					int me = 0;
 					ArrayList<Player> players = new ArrayList<Player>();
 					int i = 0;
@@ -291,6 +303,8 @@ public class MainActivity extends BaseGameActivity implements
 					theme.setCol(5);
 					startGame(theme, players, me, false);
 				} else {
+					LogginUtil.logEvent(this, "Game started",
+							"Multi-player online", name, 0);
 					if (mCreatorId.equals(mMyId)) {
 						int me = 0;
 						Theme theme = new Theme("");
@@ -445,7 +459,8 @@ public class MainActivity extends BaseGameActivity implements
 				return true;
 			} else {
 				if (toast == null)
-					toast = Toast.makeText(MainActivity.this, "Press back again to leave the game.",
+					toast = Toast.makeText(MainActivity.this,
+							"Press back again to leave the game.",
 							Toast.LENGTH_SHORT);
 				toast.show();
 				leaveGame = true;
@@ -604,7 +619,6 @@ public class MainActivity extends BaseGameActivity implements
 			showGameError();
 			return;
 		}
-
 		// show the waiting room UI
 		showWaitingRoom(room);
 	}
