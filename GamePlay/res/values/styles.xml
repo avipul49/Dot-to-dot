@@ -79,7 +79,7 @@
     </style>
 
     <style name="InvPopup" parent="@style/LLScreen">
-        <item name="android:background">@color/PopupColor</item>
+        <item name="android:background">@drawable/button_bg</item>
         <item name="android:padding">10dp</item>
         <item name="android:layout_gravity">top|right</item>
         <item name="android:layout_width">match_parent</item>

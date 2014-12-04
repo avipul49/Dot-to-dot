@@ -12,7 +12,6 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -60,7 +59,6 @@ public class GameBoardFragment extends Fragment implements
 	private int score[] = new int[2];
 	private TextView tvLeftScore;
 	private TextView tvRightScore;
-	private CountDownTimer countDownTimer;
 	private Toast notMyTurnToast;
 	private TextView notification;
 	private GameBoard gameBoard;
@@ -134,7 +132,7 @@ public class GameBoardFragment extends Fragment implements
 	private void resetTimer() {
 		Intent intent = new Intent();
 		intent.setAction(MyService.START);
-		getActivity().sendBroadcast(intent);
+		context.sendBroadcast(intent);
 		tvTimer.setTextColor(Color.BLACK);
 	}
 
@@ -199,7 +197,7 @@ public class GameBoardFragment extends Fragment implements
 				gameState.createQuickBoard();
 			else {
 				gameState.createBoard();
-				gamePlayInterface.sendMove(gameState.getStartGameMessage());
+				//gamePlayInterface.sendMove(gameState.getStartGameMessage());
 			}
 		}
 	}
@@ -230,8 +228,6 @@ public class GameBoardFragment extends Fragment implements
 	@Override
 	public void onPause() {
 		super.onPause();
-		if (countDownTimer != null)
-			countDownTimer.cancel();
 	}
 
 	public void onLeave() {
@@ -341,7 +337,6 @@ public class GameBoardFragment extends Fragment implements
 		score[gameState.getPlayer()] = curScore;
 		tvScore[gameState.getPlayer()].setText(String.format("%02d", curScore));
 		if (gameState.isGameOver(marked)) {
-			countDownTimer.cancel();
 			if (gameState.isSinglePlayer())
 				gamePlayInterface.gameOver(score[0] - score[1]);
 			notification.setText("Game Over");
@@ -503,11 +498,6 @@ public class GameBoardFragment extends Fragment implements
 		}
 
 	};
-
-	public void stopTimer() {
-		if (countDownTimer != null)
-			countDownTimer.cancel();
-	}
 
 	class TimerReceiver extends BroadcastReceiver {
 

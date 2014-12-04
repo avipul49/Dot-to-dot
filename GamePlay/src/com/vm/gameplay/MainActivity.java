@@ -179,6 +179,7 @@ public class MainActivity extends BaseGameActivity implements
 			theme.setRow(7);
 			theme.setCol(5);
 			isOnline = false;
+			quickGame = false;
 			startGame(theme, players, 0, false);
 			break;
 		case R.id.button_single_player:
@@ -191,6 +192,7 @@ public class MainActivity extends BaseGameActivity implements
 			theme.setRow(7);
 			theme.setCol(5);
 			startGame(theme, players, 0, true);
+			quickGame = false;
 			break;
 
 		case R.id.button_sign_in:
@@ -276,6 +278,7 @@ public class MainActivity extends BaseGameActivity implements
 			handleInvitationInboxResult(responseCode, intent);
 			break;
 		case RC_WAITING_ROOM:
+			quickGame = true;
 			// we got the result from the "waiting room" UI.
 			if (responseCode == Activity.RESULT_OK) {
 				// ready to start playing
@@ -290,7 +293,6 @@ public class MainActivity extends BaseGameActivity implements
 					int[] colors = new int[] { FIRST_PLAYER_COLOUR,
 							SECOND_PLAYER_COLOUR };
 					for (Participant participant : mRoom.getParticipants()) {
-
 						Player player = new Player(
 								participant.getDisplayName(), colors[i]);
 						players.add(player);
@@ -834,8 +836,6 @@ public class MainActivity extends BaseGameActivity implements
 	}
 
 	void switchToMainScreen() {
-		if (mFragment != null)
-			mFragment.stopTimer();
 		switchToScreen(isSignedIn() ? R.id.screen_main : R.id.screen_sign_in);
 	}
 
@@ -887,7 +887,7 @@ public class MainActivity extends BaseGameActivity implements
 
 	@Override
 	public void sendMove(String message) {
-		if (mParticipants != null) {
+		if (mRoomId != null && mParticipants != null) {
 			for (Participant p : mParticipants) {
 				if (p.getParticipantId().equals(mMyId))
 					continue;
