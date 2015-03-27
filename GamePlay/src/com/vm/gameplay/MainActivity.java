@@ -35,6 +35,7 @@ import com.google.android.gms.games.multiplayer.realtime.RoomConfig;
 import com.google.android.gms.games.multiplayer.realtime.RoomStatusUpdateListener;
 import com.google.android.gms.games.multiplayer.realtime.RoomUpdateListener;
 import com.google.example.games.basegameutils.BaseGameActivity;
+import com.purplebrain.adbuddiz.sdk.AdBuddiz;
 import com.vm.gameplay.gameplay.GameBoardFragment;
 import com.vm.gameplay.logging.LogginUtil;
 import com.vm.gameplay.model.Player;
@@ -98,7 +99,8 @@ public class MainActivity extends BaseGameActivity implements
 		super.onCreate(savedInstanceState);
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		setContentView(R.layout.activity_main);
-
+		AdBuddiz.setPublisherKey("c4d60cf6-2214-4e4f-9916-ab208acd31a4");
+		AdBuddiz.cacheAds(this);
 		// set up a click listener for everything we care about
 		for (int id : CLICKABLES) {
 			findViewById(id).setOnClickListener(this);
@@ -169,7 +171,7 @@ public class MainActivity extends BaseGameActivity implements
 			// md.show();
 			// intent = new Intent(this, GameSetupActivity.class);
 			// startActivity(intent);
-			LogginUtil.logEvent(this, "Started selcted", "Multi-player local",
+			LogginUtil.logEvent(this, "Game selected", "Multi-player local",
 					name, 0);
 			players = new ArrayList<Player>();
 			Player player1 = new Player("Player 1", FIRST_PLAYER_COLOUR);
@@ -184,7 +186,7 @@ public class MainActivity extends BaseGameActivity implements
 			break;
 		case R.id.button_single_player:
 		case R.id.button_single_player_2:
-			LogginUtil.logEvent(this, "Started selcted", "Single player", name,
+			LogginUtil.logEvent(this, "Game selected", "Single player", name,
 					0);
 			players = new ArrayList<Player>();
 			Player gpPLayer = new Player(name, FIRST_PLAYER_COLOUR);

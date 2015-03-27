@@ -29,12 +29,14 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.purplebrain.adbuddiz.sdk.AdBuddiz;
 import com.vm.gameplay.GameApplication;
 import com.vm.gameplay.GamePlayInterface;
 import com.vm.gameplay.MainActivity;
 import com.vm.gameplay.R;
 import com.vm.gameplay.dialog.DialogCallback;
 import com.vm.gameplay.dialog.MessageDialog;
+import com.vm.gameplay.logging.LogginUtil;
 import com.vm.gameplay.model.BoardDimensions;
 import com.vm.gameplay.model.Computer;
 import com.vm.gameplay.model.GameState;
@@ -197,7 +199,6 @@ public class GameBoardFragment extends Fragment implements
 				gameState.createQuickBoard();
 			else {
 				gameState.createBoard();
-				//gamePlayInterface.sendMove(gameState.getStartGameMessage());
 			}
 		}
 	}
@@ -421,6 +422,21 @@ public class GameBoardFragment extends Fragment implements
 				.getPlayers(), score, new int[] { gamePlay.getRects1().size(),
 				gamePlay.getRects2().size() }, gameState.getTheme().getGems());
 		gameOverDialog.show();
+		AdBuddiz.showAd(this.getActivity());
+		if (isOnline) {
+			String gameType = "Single PLayer online";
+			String gameMessage = players.get(0).getName();
+			if (quickGame) {
+				gameType = "Quick game";
+				gameMessage += " vs " + players.get(1).getName();
+			} else if (!singlePlayer) {
+				gameType = "Multi Player online";
+				gameMessage += " vs " + players.get(1).getName();
+			}
+
+			LogginUtil.logEvent(this.getActivity(), "Online games", gameType,
+					gameMessage, 0);
+		}
 	}
 
 	@Override

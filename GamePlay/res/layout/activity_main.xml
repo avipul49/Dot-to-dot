@@ -1,120 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white" >
+    android:background="@color/background" >
 
-    <!-- SIGN-IN SCREEN -->
-
-    <LinearLayout
-        android:id="@+id/screen_sign_in"
-        style="@style/LLScreen" >
-
-        <com.google.android.gms.common.SignInButton
-            android:id="@+id/button_sign_in"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp" />
-
-        <Button
-            android:id="@+id/button_single_player"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:text="@string/single_player" />
-
-        <Button
-            android:id="@+id/local"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:text="Multi player game" />
-    </LinearLayout>
-
-    <!-- MAIN SCREEN -->
-
-    <LinearLayout
-        android:id="@+id/screen_main"
-        style="@style/LLScreen" >
-
-        <Button
-            android:id="@+id/button_single_player_2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:text="@string/single_player" />
-
-        <Button
-            android:id="@+id/local_2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:text="Multi player game" />
-
-        <Button
-            android:id="@+id/button_quick_game"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:text="@string/quick_game" />
-
-        <Button
-            android:id="@+id/button_invite_players"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:text="@string/invite_players" />
-
-        <Button
-            android:id="@+id/button_see_invitations"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:text="@string/see_invitations" />
-
-        <Button
-            android:id="@+id/button_sign_out"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:text="@string/sign_out" />
-    </LinearLayout>
-
-    <!-- INVITATION POPUP -->
-
-    <LinearLayout
-        android:id="@+id/invitation_popup"
-        style="@style/InvPopup" >
-
-        <TextView
-            android:id="@+id/incoming_invitation_text"
-            style="@style/InvPopupText" />
-
-        <Button
-            android:id="@+id/button_accept_popup_invitation"
-            style="@style/InvPopupButton"
-            android:text="@string/accept_popup_invite" />
-    </LinearLayout>
-
-    <!-- "PLEASE WAIT" SCREEN -->
-
-    <LinearLayout
-        android:id="@+id/screen_wait"
+    <ImageView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center" >
+        android:layout_height="75dp"
+        android:layout_margin="10dp"
+        android:contentDescription="@string/app_name"
+        android:src="@drawable/new_icon" />
 
-        <TextView
-            style="@style/Blurb"
-            android:text="@string/please_wait" />
-    </LinearLayout>
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
 
-    <!-- GAMEPLAY SCREEN -->
+        <!-- SIGN-IN SCREEN -->
 
-    <LinearLayout
-        android:id="@+id/screen_game"
-        style="@style/LLScreen" >
-    </LinearLayout>
+        <LinearLayout
+            android:id="@+id/screen_sign_in"
+            style="@style/LLScreen" >
 
-</FrameLayout>
+            <com.google.android.gms.common.SignInButton
+                android:id="@+id/button_sign_in"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp" />
+
+            <Button
+                android:id="@+id/button_single_player"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="@string/single_player" />
+
+            <Button
+                android:id="@+id/local"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="Multi player game" />
+        </LinearLayout>
+
+        <!-- MAIN SCREEN -->
+
+        <LinearLayout
+            android:id="@+id/screen_main"
+            style="@style/LLScreen" >
+
+            <Button
+                android:id="@+id/button_single_player_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="@string/single_player" />
+
+            <Button
+                android:id="@+id/local_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="Multi player game" />
+
+            <Button
+                android:id="@+id/button_quick_game"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="@string/quick_game" />
+
+            <Button
+                android:id="@+id/button_invite_players"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="@string/invite_players" />
+
+            <Button
+                android:id="@+id/button_see_invitations"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="@string/see_invitations" />
+
+            <Button
+                android:id="@+id/button_sign_out"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="@string/sign_out" />
+        </LinearLayout>
+
+        <!-- INVITATION POPUP -->
+
+        <LinearLayout
+            android:id="@+id/invitation_popup"
+            style="@style/InvPopup" >
+
+            <TextView
+                android:id="@+id/incoming_invitation_text"
+                style="@style/InvPopupText" />
+
+            <Button
+                android:id="@+id/button_accept_popup_invitation"
+                style="@style/InvPopupButton"
+                android:text="@string/accept_popup_invite" />
+        </LinearLayout>
+
+        <!-- "PLEASE WAIT" SCREEN -->
+
+        <LinearLayout
+            android:id="@+id/screen_wait"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center" >
+
+            <TextView
+                style="@style/Blurb"
+                android:text="@string/please_wait" />
+        </LinearLayout>
+
+        <!-- GAMEPLAY SCREEN -->
+
+        <LinearLayout
+            android:id="@+id/screen_game"
+            style="@style/LLScreen" >
+        </LinearLayout>
+    </FrameLayout>
+
+</RelativeLayout>
